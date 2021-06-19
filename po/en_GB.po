@@ -1,0 +1,59 @@
+# English translations for PACKAGE package.
+# Copyright (C) 2017 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#  <simon@raspberrypi.org>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-11-20 15:23+0000\n"
+"PO-Revision-Date: 2017-03-06 16:38+0000\n"
+"Last-Translator:  <simon@raspberrypi.org>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../plugins/ejecter/ejecter.c:172
+msgid "Drive was removed without ejecting"
+msgstr "Drive was removed without ejecting"
+
+#: ../plugins/ejecter/ejecter.c:172
+msgid "Please use menu to eject before removal"
+msgstr "Please use menu to eject before removal"
+
+#: ../plugins/ejecter/ejecter.c:200
+#, c-format
+msgid "%s has been ejected"
+msgstr "%s has been ejected"
+
+#: ../plugins/ejecter/ejecter.c:201
+msgid "It is now safe to remove the device"
+msgstr "It is now safe to remove the device"
+
+#: ../plugins/ejecter/ejecter.c:206
+#, c-format
+msgid "Failed to eject %s"
+msgstr "Failed to eject %s"
+
+#: ../plugins/ejecter/ejecter.c:588
+msgid "Select a drive in menu to eject safely"
+msgstr "Select a drive in menu to eject safely"
+
+#: ../plugins/ejecter/ejecter.c:642 ../plugins/ejecter/ejecter.c:652
+msgid "Ejecter"
+msgstr "Ejecter"
+
+#: ../plugins/ejecter/ejecter.c:644
+msgid "Hide icon when no devices"
+msgstr "Hide icon when no devices"
+
+#: ../plugins/ejecter/ejecter.c:653
+msgid "Ejects mounted drives"
+msgstr "Ejects mounted drives"
+
+#~ msgid "No ejectable devices"
+#~ msgstr "No ejectable devices"
