@@ -55,8 +55,8 @@ typedef struct {
     GtkWidget *tray_icon;           /* Displayed image */
     config_setting_t *settings;     /* Plugin settings */
     GtkWidget *menu;                /* Popup menu */
-    gboolean updates_avail;
     int calls;
+    int n_updates;
     gchar **ids;
     gboolean is_pi;
 } UpdaterPlugin;
@@ -150,16 +150,15 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
     sack = pk_results_get_package_sack (results);
     fsack = pk_package_sack_filter (sack, filter_fn, data);
 
-    n_up = pk_package_sack_get_size (fsack);
-    if (n_up > 0)
+    up->n_updates = pk_package_sack_get_size (fsack);
+    if (up->n_updates > 0)
     {
-        DEBUG ("Check complete - %d updates available", n_up);
-        up->updates_avail = TRUE;
+        DEBUG ("Check complete - %d updates available", up->n_updates);
+        up->ids = pk_package_sack_get_ids (fsack);
     }
     else
     {
         DEBUG ("Check complete - no updates available");
-        up->updates_avail = FALSE;
     }
     update_icon (up);
 
@@ -214,6 +213,9 @@ static void check_for_updates (gpointer user_data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) user_data;
 
+    up->n_updates = 0;
+    g_strfreev (up->ids);
+
     if (!net_available ())
     {
         DEBUG ("No network connection - update check failed");
@@ -242,6 +244,19 @@ static void install_updates (GtkWidget *widget, gpointer user_data)
 static void show_updates (GtkWidget *widget, gpointer user_data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+    GtkBuilder *builder;
+    GtkWidget *update_dlg, *update_list;
+    int count;
+
+    builder = gtk_builder_new ();
+    gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/ui/lxplug-updater.ui", NULL);
+    update_dlg = (GtkWidget *) gtk_builder_get_object (builder, "update_dlg");
+    update_list = (GtkWidget *) gtk_builder_get_object (builder, "update_list");
+
+    count = 0;
+    while (count < up->n_updates) printf ("Package %s\n", up->ids[count++]);
+
+    gtk_dialog_run (GTK_DIALOG (update_dlg));
 }
 
 /* Updater functions */
@@ -257,7 +272,7 @@ static void updater_popup_set_position (GtkMenu *menu, gint *px, gint *py, gbool
 static void update_icon (UpdaterPlugin *up)
 {
     /* if updates are available, show the icon */
-    if (up->updates_avail)
+    if (up->n_updates)
     {
         gtk_widget_show_all (up->plugin);
         gtk_widget_set_sensitive (up->plugin, TRUE);
@@ -378,7 +393,6 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
 
     /* Initialise data structures */
     up->menu = NULL;
-    up->updates_avail = FALSE;
 
     /* Hide the widget and start the check for updates */
     gtk_widget_show_all (up->plugin);
