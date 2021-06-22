@@ -36,7 +36,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "plugin.h"
 
-//#define DEBUG_ON
+#define I_KNOW_THE_PACKAGEKIT_GLIB2_API_IS_SUBJECT_TO_CHANGE
+#include <packagekit-glib2/packagekit.h>
+
+#define DEBUG_ON
 #ifdef DEBUG_ON
 #define DEBUG(fmt,args...) g_message("up: " fmt,##args)
 #else
@@ -53,6 +56,9 @@ typedef struct {
     config_setting_t *settings;     /* Plugin settings */
     GtkWidget *menu;                /* Popup menu */
     gboolean updates_avail;
+    int calls;
+    gchar **ids;
+    gboolean is_pi;
 } UpdaterPlugin;
 
 /* Prototypes */
@@ -63,17 +69,191 @@ static gboolean idle_icon_update (gpointer data);
 static void show_menu (UpdaterPlugin *up);
 static void hide_menu (UpdaterPlugin *up);
 
+static char *get_shell_string (char *cmd, gboolean all)
+{
+    char *line = NULL, *res = NULL;
+    size_t len = 0;
+    FILE *fp = popen (cmd, "r");
+
+    if (fp == NULL) return g_strdup ("");
+    if (getline (&line, &len, fp) > 0)
+    {
+        g_strdelimit (line, "\n\r", 0);
+        if (!all)
+        {
+            res = line;
+            while (*res++) if (g_ascii_isspace (*res)) *res = 0;
+        }
+        res = g_strdup (line);
+    }
+    pclose (fp);
+    g_free (line);
+    return res ? res : g_strdup ("");
+}
+
+static char *get_string (char *cmd)
+{
+    return get_shell_string (cmd, FALSE);
+}
+
+static gboolean net_available (void)
+{
+    char *ip;
+    gboolean val = FALSE;
+
+    ip = get_string ("hostname -I | tr ' ' \\\\n | grep \\\\. | tr \\\\n ','");
+    if (ip)
+    {
+        if (strlen (ip)) val = TRUE;
+        g_free (ip);
+    }
+    return val;
+}
+
+static gboolean clock_synced (void)
+{
+    if (system ("test -e /usr/sbin/ntpd") == 0)
+    {
+        if (system ("ntpq -p | grep -q ^\\*") == 0) return TRUE;
+    }
+    else
+    {
+        if (system ("timedatectl status | grep -q \"synchronized: yes\"") == 0) return TRUE;
+    }
+    return FALSE;
+}
+
+static void resync (void)
+{
+    if (system ("test -e /usr/sbin/ntpd") == 0)
+    {
+        system ("/etc/init.d/ntp stop; ntpd -gq; /etc/init.d/ntp start");
+    }
+    else
+    {
+        system ("systemctl -q stop systemd-timesyncd 2> /dev/null; systemctl -q start systemd-timesyncd 2> /dev/null");
+    }
+}
+
+static gboolean filter_fn (PkPackage *package, gpointer user_data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+    if (up->is_pi) return TRUE;
+    if (strstr (pk_package_get_arch (package), "amd64")) return FALSE;
+    return TRUE;
+}
+
+static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) data;
+    PkPackageSack *sack, *fsack;
+    int n_up;
+
+    GError *error = NULL;
+    PkResults *results = pk_task_generic_finish (task, res, &error);
+
+    if (error != NULL)
+    {
+        DEBUG ("Error comparing versions - %s", error->message);
+        g_error_free (error);
+        return;
+    }
+
+    sack = pk_results_get_package_sack (results);
+    fsack = pk_package_sack_filter (sack, filter_fn, data);
+
+    n_up = pk_package_sack_get_size (fsack);
+    if (n_up > 0)
+    {
+        DEBUG ("Check complete - %d updates available", n_up);
+        up->updates_avail = TRUE;
+    }
+    else
+    {
+        DEBUG ("Check complete - no updates available");
+        up->updates_avail = FALSE;
+    }
+    update_icon (up);
+
+    g_object_unref (sack);
+    g_object_unref (fsack);
+}
+
+static void refresh_cache_done (PkTask *task, GAsyncResult *res, gpointer data)
+{
+    GError *error = NULL;
+    PkResults *results = pk_task_generic_finish (task, res, &error);
+
+    if (error != NULL)
+    {
+        DEBUG ("Error updating cache - %s", error->message);
+        g_error_free (error);
+        return;
+    }
+
+    DEBUG ("Cache updated - comparing versions");
+    pk_client_get_updates_async (PK_CLIENT (task), PK_FILTER_ENUM_NONE, NULL, NULL, NULL, (GAsyncReadyCallback) check_updates_done, data);
+}
+
+static gpointer refresh_update_cache (gpointer data)
+{
+    PkTask *task = pk_task_new ();
+    pk_client_refresh_cache_async (PK_CLIENT (task), TRUE, NULL, NULL, NULL, (GAsyncReadyCallback) refresh_cache_done, data);
+    return NULL;
+}
+
+static gboolean ntp_check (gpointer data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) data;
+
+    if (clock_synced ())
+    {
+        DEBUG ("Clock synced - checking for updates");
+        g_thread_new (NULL, refresh_update_cache, up);
+        return FALSE;
+    }
+
+    if (up->calls == 0) resync ();
+
+    if (up->calls++ > 120)
+    {
+        DEBUG ("Couldn't sync clock - update check failed");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static void check_for_updates (gpointer user_data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) user_data;
-}
 
-static void show_updates (GtkWidget *widget, gpointer user_data)
-{
-    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+    if (!net_available ())
+    {
+        DEBUG ("No network connection - update check failed");
+        return;
+    }
+
+    if (!clock_synced ())
+    {
+        DEBUG ("Synchronising clock");
+        up->calls = 0;
+        g_timeout_add_seconds (1, ntp_check, up);
+        return;
+    }
+
+    DEBUG ("Checking for updates");
+    g_thread_new (NULL, refresh_update_cache, up);
 }
 
 static void install_updates (GtkWidget *widget, gpointer user_data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+    //pk_task_update_packages_async (task, up->ids, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) do_updates_done, user_data);
+    //g_strfreev (up->ids);
+}
+
+static void show_updates (GtkWidget *widget, gpointer user_data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) user_data;
 }
@@ -189,6 +369,9 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
     bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
     textdomain (GETTEXT_PACKAGE);
 #endif
+
+    if (system ("raspi-config nonint is_pi")) up->is_pi = FALSE;
+    else up->is_pi = TRUE;
 
     up->tray_icon = gtk_image_new ();
     lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning-symbolic");

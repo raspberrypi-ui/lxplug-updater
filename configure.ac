@@ -40,6 +40,7 @@ else
 fi
 
 pkg_modules="$pkg_modules \
+             packagekit-glib2 \
              gio-unix-2.0 \
              gthread-2.0 \
              gmodule-2.0"
