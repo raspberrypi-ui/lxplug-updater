@@ -58,7 +58,6 @@ typedef struct {
     int calls;
     int n_updates;
     gchar **ids;
-    gboolean is_pi;
     GtkWidget *update_dlg;
 } UpdaterPlugin;
 
@@ -70,45 +69,10 @@ static gboolean idle_icon_update (gpointer data);
 static void show_menu (UpdaterPlugin *up);
 static void hide_menu (UpdaterPlugin *up);
 
-static char *get_shell_string (char *cmd, gboolean all)
-{
-    char *line = NULL, *res = NULL;
-    size_t len = 0;
-    FILE *fp = popen (cmd, "r");
-
-    if (fp == NULL) return g_strdup ("");
-    if (getline (&line, &len, fp) > 0)
-    {
-        g_strdelimit (line, "\n\r", 0);
-        if (!all)
-        {
-            res = line;
-            while (*res++) if (g_ascii_isspace (*res)) *res = 0;
-        }
-        res = g_strdup (line);
-    }
-    pclose (fp);
-    g_free (line);
-    return res ? res : g_strdup ("");
-}
-
-static char *get_string (char *cmd)
-{
-    return get_shell_string (cmd, FALSE);
-}
-
 static gboolean net_available (void)
 {
-    char *ip;
-    gboolean val = FALSE;
-
-    ip = get_string ("hostname -I | tr ' ' \\\\n | grep \\\\. | tr \\\\n ','");
-    if (ip)
-    {
-        if (strlen (ip)) val = TRUE;
-        g_free (ip);
-    }
-    return val;
+    if (!system ("hostname -I | tr ' ' \\\\n | grep \\\\. | tr \\\\n ',' | grep -q .")) return TRUE;
+    else return FALSE;
 }
 
 static gboolean clock_synced (void)
@@ -127,7 +91,6 @@ static gboolean clock_synced (void)
 static gboolean filter_fn (PkPackage *package, gpointer user_data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) user_data;
-    if (up->is_pi) return TRUE;
     if (strstr (pk_package_get_arch (package), "amd64")) return FALSE;
     return TRUE;
 }
@@ -135,7 +98,7 @@ static gboolean filter_fn (PkPackage *package, gpointer user_data)
 static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) data;
-    PkPackageSack *sack, *fsack;
+    PkPackageSack *sack = NULL, *fsack;
     int n_up;
 
     GError *error = NULL;
@@ -148,8 +111,15 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
         return;
     }
 
-    sack = pk_results_get_package_sack (results);
-    fsack = pk_package_sack_filter (sack, filter_fn, data);
+    if (system ("raspi-config nonint is_pi"))
+    {
+        sack = pk_results_get_package_sack (results);
+        fsack = pk_package_sack_filter (sack, filter_fn, data);
+    }
+    else
+    {
+        fsack = pk_results_get_package_sack (results);
+    }
 
     up->n_updates = pk_package_sack_get_size (fsack);
     if (up->n_updates > 0)
@@ -163,7 +133,7 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
     }
     update_icon (up);
 
-    g_object_unref (sack);
+    if (sack) g_object_unref (sack);
     g_object_unref (fsack);
 }
 
@@ -403,9 +373,6 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
     bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
     textdomain (GETTEXT_PACKAGE);
 #endif
-
-    if (system ("raspi-config nonint is_pi")) up->is_pi = FALSE;
-    else up->is_pi = TRUE;
 
     up->tray_icon = gtk_image_new ();
     lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning-symbolic");
