@@ -59,6 +59,7 @@ typedef struct {
     int n_updates;
     gchar **ids;
     GtkWidget *update_dlg;
+    int interval;
 } UpdaterPlugin;
 
 /* Prototypes */
@@ -397,13 +398,17 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
     /* Hide the widget and start the check for updates */
     gtk_widget_show_all (up->plugin);
     g_idle_add (init_icon, up);
+
+    /* Set timer for update checks */
+    if (!config_setting_lookup_int (settings, "Interval", &up->interval)) up->interval = 24;
+
     return up->plugin;
 }
 
 static gboolean updater_apply_configuration (gpointer user_data)
 {
     UpdaterPlugin *up = lxpanel_plugin_get_data ((GtkWidget *) user_data);
-
+    config_group_set_int (up->settings, "Interval", up->interval);
     update_icon (up);
 }
 
@@ -415,7 +420,7 @@ static GtkWidget *updater_configure (LXPanel *panel, GtkWidget *p)
 #endif
     return lxpanel_generic_config_dlg(_("Updater"), panel,
         updater_apply_configuration, p,
-//        _("Hide icon when no devices"), &up->autohide, CONF_TYPE_BOOL,
+        _("Hours between checks for updates"), &up->interval, CONF_TYPE_INT,
         NULL);
 }
 
