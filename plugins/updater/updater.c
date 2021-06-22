@@ -59,6 +59,7 @@ typedef struct {
     int n_updates;
     gchar **ids;
     gboolean is_pi;
+    GtkWidget *update_dlg;
 } UpdaterPlugin;
 
 /* Prototypes */
@@ -241,22 +242,54 @@ static void install_updates (GtkWidget *widget, gpointer user_data)
     //g_strfreev (up->ids);
 }
 
+static void handle_close_update_dialog (GtkButton *button, gpointer user_data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+    if (up->update_dlg)
+    {
+        gtk_widget_destroy (up->update_dlg);
+        up->update_dlg = NULL;
+    }
+}
+
+static gint delete_update_dialog (GtkWidget *widget, GdkEvent *event, gpointer user_data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+    handle_close_update_dialog (NULL, user_data);
+    return TRUE;
+}
+
 static void show_updates (GtkWidget *widget, gpointer user_data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) user_data;
     GtkBuilder *builder;
-    GtkWidget *update_dlg, *update_list;
+    GtkWidget *update_list;
+    GtkCellRenderer *trend = gtk_cell_renderer_text_new ();
     int count;
+    char buffer[1024];
 
     builder = gtk_builder_new ();
     gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/ui/lxplug-updater.ui", NULL);
-    update_dlg = (GtkWidget *) gtk_builder_get_object (builder, "update_dlg");
-    update_list = (GtkWidget *) gtk_builder_get_object (builder, "update_list");
+    up->update_dlg = (GtkWidget *) gtk_builder_get_object (builder, "update_dlg");
+    g_signal_connect (gtk_builder_get_object (builder, "btn_install"), "clicked", G_CALLBACK (handle_close_update_dialog), up);
+    g_signal_connect (gtk_builder_get_object (builder, "btn_close"), "clicked", G_CALLBACK (handle_close_update_dialog), up);
+    g_signal_connect (up->update_dlg, "delete_event", G_CALLBACK (delete_update_dialog), up);
 
+    GtkListStore *ls = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_STRING);
     count = 0;
-    while (count < up->n_updates) printf ("Package %s\n", up->ids[count++]);
+    while (count < up->n_updates)
+    {
+        g_strlcpy (buffer, up->ids[count], sizeof (buffer));
+        gtk_list_store_insert_with_values (ls, NULL, count, 0, strtok (buffer, ";"), 1, strtok (NULL, ";"), -1);
+        count++;
+    }
 
-    gtk_dialog_run (GTK_DIALOG (update_dlg));
+    update_list = (GtkWidget *) gtk_builder_get_object (builder, "update_list");
+    gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (update_list), -1, "Package", trend, "text", 0, NULL);
+    gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (update_list), -1, "Version", trend, "text", 1, NULL);
+    gtk_tree_view_set_model (GTK_TREE_VIEW (update_list), GTK_TREE_MODEL (ls));
+
+    gtk_widget_show_all (up->update_dlg);
 }
 
 /* Updater functions */
