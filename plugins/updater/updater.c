@@ -52,7 +52,7 @@ typedef struct {
     GtkWidget *tray_icon;           /* Displayed image */
     config_setting_t *settings;     /* Plugin settings */
     GtkWidget *menu;                /* Popup menu */
-    gboolean autohide;
+    gboolean updates_avail;
 } UpdaterPlugin;
 
 /* Prototypes */
@@ -62,6 +62,21 @@ static void update_icon (UpdaterPlugin *up);
 static gboolean idle_icon_update (gpointer data);
 static void show_menu (UpdaterPlugin *up);
 static void hide_menu (UpdaterPlugin *up);
+
+static void check_for_updates (gpointer user_data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+}
+
+static void show_updates (GtkWidget *widget, gpointer user_data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+}
+
+static void install_updates (GtkWidget *widget, gpointer user_data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+}
 
 /* Updater functions */
 
@@ -75,43 +90,46 @@ static void updater_popup_set_position (GtkMenu *menu, gint *px, gint *py, gbool
 
 static void update_icon (UpdaterPlugin *up)
 {
-    if (up->autohide)
+    /* if updates are available, show the icon */
+    if (up->updates_avail)
     {
-        /* loop through all devices, checking for mounted volumes */
-        if (1)
-        {
-            gtk_widget_show_all (up->plugin);
-            gtk_widget_set_sensitive (up->plugin, TRUE);
-        }
-        else
-        {
-            gtk_widget_hide (up->plugin);
-            gtk_widget_set_sensitive (up->plugin, FALSE);
-        }
+        gtk_widget_show_all (up->plugin);
+        gtk_widget_set_sensitive (up->plugin, TRUE);
+    }
+    else
+    {
+        gtk_widget_hide (up->plugin);
+        gtk_widget_set_sensitive (up->plugin, FALSE);
     }
 }
 
-static gboolean idle_icon_update (gpointer data)
+static gboolean init_icon (gpointer data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) data;
     update_icon (up);
+    check_for_updates (up);
     return FALSE;
 }
 
 static void show_menu (UpdaterPlugin *up)
 {
+    GtkWidget *item;
+
     hide_menu (up);
 
     up->menu = gtk_menu_new ();
     gtk_menu_set_reserve_toggle_size (GTK_MENU (up->menu), FALSE);
 
-    int count = 0;
+    item = lxpanel_plugin_new_menu_item (up->panel, _("Show Updates..."), 0, NULL);
+    g_signal_connect (G_OBJECT (item), "activate", G_CALLBACK (show_updates), up);
+    gtk_menu_shell_append (GTK_MENU_SHELL (up->menu), item);
 
-    if (count)
-    {
-        gtk_widget_show_all (up->menu);
-        gtk_menu_popup_at_widget (GTK_MENU (up->menu), up->plugin, GDK_GRAVITY_NORTH_WEST, GDK_GRAVITY_NORTH_WEST, NULL);
-    }
+    item = lxpanel_plugin_new_menu_item (up->panel, _("Install Updates"), 0, NULL);
+    g_signal_connect (G_OBJECT (item), "activate", G_CALLBACK (install_updates), up);
+    gtk_menu_shell_append (GTK_MENU_SHELL (up->menu), item);
+
+    gtk_widget_show_all (up->menu);
+    gtk_menu_popup_at_widget (GTK_MENU (up->menu), up->plugin, GDK_GRAVITY_NORTH_WEST, GDK_GRAVITY_NORTH_WEST, NULL);
 }
 
 static void hide_menu (UpdaterPlugin *up)
@@ -146,7 +164,7 @@ static void updater_configuration_changed (LXPanel *panel, GtkWidget *p)
 {
     UpdaterPlugin *up = lxpanel_plugin_get_data (p);
 
-    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "media-eject");
+    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning-symbolic");
 }
 
 /* Plugin destructor. */
@@ -173,8 +191,8 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
 #endif
 
     up->tray_icon = gtk_image_new ();
-    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "media-eject");
-    gtk_widget_set_tooltip_text (up->tray_icon, _("Select a drive in menu to eject safely"));
+    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning-symbolic");
+    gtk_widget_set_tooltip_text (up->tray_icon, _("Updates are available - click the icon to install"));
     gtk_widget_set_visible (up->tray_icon, TRUE);
 
     /* Allocate top level widget and set into Plugin widget pointer. */
@@ -190,18 +208,12 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
     gtk_container_add (GTK_CONTAINER (up->plugin), up->tray_icon);
 
     /* Initialise data structures */
-    if (config_setting_lookup_int (settings, "AutoHide", &val))
-    {
-        if (val == 1) up->autohide = TRUE;
-        else up->autohide = FALSE;
-    }
-    else up->autohide = FALSE;
-
     up->menu = NULL;
+    up->updates_avail = FALSE;
 
-    /* Show the widget, and return. */
+    /* Hide the widget and start the check for updates */
     gtk_widget_show_all (up->plugin);
-    g_idle_add (idle_icon_update, up);
+    g_idle_add (init_icon, up);
     return up->plugin;
 }
 
@@ -209,9 +221,7 @@ static gboolean updater_apply_configuration (gpointer user_data)
 {
     UpdaterPlugin *up = lxpanel_plugin_get_data ((GtkWidget *) user_data);
 
-    config_group_set_int (up->settings, "AutoHide", up->autohide);
-    if (up->autohide) update_icon (up);
-    else gtk_widget_show_all (up->plugin);
+    update_icon (up);
 }
 
 static GtkWidget *updater_configure (LXPanel *panel, GtkWidget *p)
@@ -222,7 +232,7 @@ static GtkWidget *updater_configure (LXPanel *panel, GtkWidget *p)
 #endif
     return lxpanel_generic_config_dlg(_("Updater"), panel,
         updater_apply_configuration, p,
-        _("Hide icon when no devices"), &up->autohide, CONF_TYPE_BOOL,
+//        _("Hide icon when no devices"), &up->autohide, CONF_TYPE_BOOL,
         NULL);
 }
 
