@@ -123,18 +123,6 @@ static gboolean clock_synced (void)
     return FALSE;
 }
 
-static void resync (void)
-{
-    if (system ("test -e /usr/sbin/ntpd") == 0)
-    {
-        system ("/etc/init.d/ntp stop; ntpd -gq; /etc/init.d/ntp start");
-    }
-    else
-    {
-        system ("systemctl -q stop systemd-timesyncd 2> /dev/null; systemctl -q start systemd-timesyncd 2> /dev/null");
-    }
-}
-
 static gboolean filter_fn (PkPackage *package, gpointer user_data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) user_data;
@@ -213,8 +201,6 @@ static gboolean ntp_check (gpointer data)
         return FALSE;
     }
 
-    if (up->calls == 0) resync ();
-
     if (up->calls++ > 120)
     {
         DEBUG ("Couldn't sync clock - update check failed");
@@ -238,7 +224,7 @@ static void check_for_updates (gpointer user_data)
     {
         DEBUG ("Synchronising clock");
         up->calls = 0;
-        g_timeout_add_seconds (1, ntp_check, up);
+        g_timeout_add_seconds (5, ntp_check, up);
         return;
     }
 
@@ -375,7 +361,7 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
 
     up->tray_icon = gtk_image_new ();
     lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning-symbolic");
-    gtk_widget_set_tooltip_text (up->tray_icon, _("Updates are available - click the icon to install"));
+    gtk_widget_set_tooltip_text (up->tray_icon, _("Updates are available - click to install"));
     gtk_widget_set_visible (up->tray_icon, TRUE);
 
     /* Allocate top level widget and set into Plugin widget pointer. */
