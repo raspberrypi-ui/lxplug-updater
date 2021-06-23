@@ -205,11 +205,19 @@ static void check_for_updates (gpointer user_data)
     g_thread_new (NULL, refresh_update_cache, up);
 }
 
+static void launch_installer (void)
+{
+    char *cmd[3] = {"sudo", "lxplug-updater-install", NULL};
+
+    gchar **environ = g_environ_setenv (g_get_environ (), "SUDO_ASKPASS", "/usr/lib/lxplugins/pwdlpu.sh", TRUE);
+    g_spawn_async (NULL, cmd, environ, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL);
+    g_strfreev (environ);
+}
+
 static void install_updates (GtkWidget *widget, gpointer user_data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) user_data;
-    //pk_task_update_packages_async (task, up->ids, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) do_updates_done, user_data);
-    //g_strfreev (up->ids);
+    if (net_available () && clock_synced ()) launch_installer ();
 }
 
 static void handle_close_update_dialog (GtkButton *button, gpointer user_data)
