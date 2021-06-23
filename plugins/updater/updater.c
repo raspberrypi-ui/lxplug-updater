@@ -216,7 +216,6 @@ static void launch_installer (void)
 
 static void install_updates (GtkWidget *widget, gpointer user_data)
 {
-    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
     if (net_available () && clock_synced ()) launch_installer ();
 }
 
@@ -228,6 +227,17 @@ static void handle_close_update_dialog (GtkButton *button, gpointer user_data)
         gtk_widget_destroy (up->update_dlg);
         up->update_dlg = NULL;
     }
+}
+
+static void handle_close_and_install (GtkButton *button, gpointer user_data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+    if (up->update_dlg)
+    {
+        gtk_widget_destroy (up->update_dlg);
+        up->update_dlg = NULL;
+    }
+    if (net_available () && clock_synced ()) launch_installer ();
 }
 
 static gint delete_update_dialog (GtkWidget *widget, GdkEvent *event, gpointer user_data)
@@ -249,7 +259,7 @@ static void show_updates (GtkWidget *widget, gpointer user_data)
     builder = gtk_builder_new ();
     gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/ui/lxplug-updater.ui", NULL);
     up->update_dlg = (GtkWidget *) gtk_builder_get_object (builder, "update_dlg");
-    g_signal_connect (gtk_builder_get_object (builder, "btn_install"), "clicked", G_CALLBACK (handle_close_update_dialog), up);
+    g_signal_connect (gtk_builder_get_object (builder, "btn_install"), "clicked", G_CALLBACK (handle_close_and_install), up);
     g_signal_connect (gtk_builder_get_object (builder, "btn_close"), "clicked", G_CALLBACK (handle_close_update_dialog), up);
     g_signal_connect (up->update_dlg, "delete_event", G_CALLBACK (delete_update_dialog), up);
 
