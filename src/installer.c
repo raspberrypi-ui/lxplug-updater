@@ -233,6 +233,7 @@ static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
 
 static gboolean close_end (gpointer data)
 {
+    system ("lxpanelctl command updater check");
     if (msg_dlg)
     {
         gtk_widget_destroy (GTK_WIDGET (msg_dlg));

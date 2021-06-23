@@ -1,5 +1,5 @@
 #!/bin/bash
-export TEXTDOMAIN=gui-pkinst
+export TEXTDOMAIN=lxplug-updater
 
 . gettext.sh
 

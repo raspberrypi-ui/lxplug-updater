@@ -46,6 +46,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUG
 #endif
 
+#define SECS_PER_HOUR 3600L
+
 /* Plug-in global data */
 
 typedef struct {
@@ -60,12 +62,13 @@ typedef struct {
     gchar **ids;
     GtkWidget *update_dlg;
     int interval;
+    guint timer;
 } UpdaterPlugin;
 
 /* Prototypes */
 
 static void updater_popup_set_position (GtkMenu *menu, gint *px, gint *py, gboolean *push_in, gpointer data);
-static void update_icon (UpdaterPlugin *up);
+static void update_icon (UpdaterPlugin *up, gboolean hide);
 static gboolean idle_icon_update (gpointer data);
 static void show_menu (UpdaterPlugin *up);
 static void hide_menu (UpdaterPlugin *up);
@@ -131,7 +134,7 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
     {
         DEBUG ("Check complete - no updates available");
     }
-    update_icon (up);
+    update_icon (up, FALSE);
 
     if (sack) g_object_unref (sack);
     g_object_unref (fsack);
@@ -166,6 +169,9 @@ static gboolean ntp_check (gpointer data)
 
     if (clock_synced ())
     {
+        up->n_updates = 0;
+        g_strfreev (up->ids);
+
         DEBUG ("Clock synced - checking for updates");
         g_thread_new (NULL, refresh_update_cache, up);
         return FALSE;
@@ -184,9 +190,6 @@ static void check_for_updates (gpointer user_data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) user_data;
 
-    up->n_updates = 0;
-    g_strfreev (up->ids);
-
     if (!net_available ())
     {
         DEBUG ("No network connection - update check failed");
@@ -200,6 +203,9 @@ static void check_for_updates (gpointer user_data)
         g_timeout_add_seconds (5, ntp_check, up);
         return;
     }
+
+    up->n_updates = 0;
+    g_strfreev (up->ids);
 
     DEBUG ("Checking for updates");
     g_thread_new (NULL, refresh_update_cache, up);
@@ -290,10 +296,10 @@ static void updater_popup_set_position (GtkMenu *menu, gint *px, gint *py, gbool
     *push_in = TRUE;
 }
 
-static void update_icon (UpdaterPlugin *up)
+static void update_icon (UpdaterPlugin *up, gboolean hide)
 {
     /* if updates are available, show the icon */
-    if (up->n_updates)
+    if (up->n_updates && !hide)
     {
         gtk_widget_show_all (up->plugin);
         gtk_widget_set_sensitive (up->plugin, TRUE);
@@ -308,9 +314,16 @@ static void update_icon (UpdaterPlugin *up)
 static gboolean init_icon (gpointer data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) data;
-    update_icon (up);
+    update_icon (up, TRUE);
     check_for_updates (up);
     return FALSE;
+}
+
+static gboolean periodic_check (gpointer data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) data;
+    check_for_updates (up);
+    return TRUE;
 }
 
 static void show_menu (UpdaterPlugin *up)
@@ -369,6 +382,21 @@ static void updater_configuration_changed (LXPanel *panel, GtkWidget *p)
     lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning-symbolic");
 }
 
+/* Handler for control message from panel */
+static gboolean updater_control_msg (GtkWidget *plugin, const char *cmd)
+{
+    UpdaterPlugin *up = lxpanel_plugin_get_data (plugin);
+
+    if (!strncmp (cmd, "check", 5))
+    {
+        update_icon (up, TRUE);
+        check_for_updates (up);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 /* Plugin destructor. */
 static void updater_destructor (gpointer user_data)
 {
@@ -413,11 +441,16 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
     up->menu = NULL;
 
     /* Hide the widget and start the check for updates */
+    up->n_updates = 0;
     gtk_widget_show_all (up->plugin);
     g_idle_add (init_icon, up);
 
     /* Set timer for update checks */
     if (!config_setting_lookup_int (settings, "Interval", &up->interval)) up->interval = 24;
+    if (up->interval)
+        up->timer = g_timeout_add_seconds (up->interval * SECS_PER_HOUR, periodic_check, up);
+    else
+        up->timer = 0;
 
     return up->plugin;
 }
@@ -426,7 +459,12 @@ static gboolean updater_apply_configuration (gpointer user_data)
 {
     UpdaterPlugin *up = lxpanel_plugin_get_data ((GtkWidget *) user_data);
     config_group_set_int (up->settings, "Interval", up->interval);
-    update_icon (up);
+    if (up->timer) g_source_remove (up->timer);
+    if (up->interval)
+        up->timer = g_timeout_add_seconds (up->interval * SECS_PER_HOUR, periodic_check, up);
+    else
+        up->timer = 0;
+    update_icon (up, FALSE);
 }
 
 static GtkWidget *updater_configure (LXPanel *panel, GtkWidget *p)
@@ -451,5 +489,6 @@ LXPanelPluginInit fm_module_init_lxpanel_gtk = {
     .reconfigure = updater_configuration_changed,
     .button_press_event = updater_button_press_event,
     .config = updater_configure,
+    .control = updater_control_msg,
     .gettext_package = GETTEXT_PACKAGE
 };
