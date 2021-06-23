@@ -144,6 +144,7 @@ static void message (char *msg, int prog)
 
 static gboolean quit (GtkButton *button, gpointer data)
 {
+    system ("lxpanelctl command updater check");
     if (msg_dlg)
     {
         gtk_widget_destroy (GTK_WIDGET (msg_dlg));
