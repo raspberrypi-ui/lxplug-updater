@@ -52,8 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_pbv;
 
-gchar *pnames[2];
-gboolean needs_reboot;
+gboolean success = FALSE;
 int calls;
 
 /*----------------------------------------------------------------------------*/
@@ -144,7 +143,7 @@ static void message (char *msg, int prog)
 
 static gboolean quit (GtkButton *button, gpointer data)
 {
-    system ("lxpanelctl command updater check");
+    if (success) system ("lxpanelctl command updater check");
     if (msg_dlg)
     {
         gtk_widget_destroy (GTK_WIDGET (msg_dlg));
@@ -217,6 +216,7 @@ static void start_install (PkTask *task, GAsyncResult *res, gpointer data)
     {
         message (_("System is up to date"), -3);
         g_timeout_add_seconds (2, close_end, NULL);
+        success = TRUE;
     }
 
     if (sack) g_object_unref (sack);
@@ -228,13 +228,14 @@ static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
     if (!error_handler (task, res, _("installing packages"))) return;
 
     message (_("System is up to date"), -3);
+    success = TRUE;
 
     g_timeout_add_seconds (2, close_end, NULL);
 }
 
 static gboolean close_end (gpointer data)
 {
-    system ("lxpanelctl command updater check");
+    if (success) system ("lxpanelctl command updater check");
     if (msg_dlg)
     {
         gtk_widget_destroy (GTK_WIDGET (msg_dlg));
