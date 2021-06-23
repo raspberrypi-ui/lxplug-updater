@@ -338,6 +338,7 @@ AC_CONFIG_FILES([
     plugins/Makefile
     po/Makefile.in
     data/Makefile
+    src/Makefile
 ])
 AC_OUTPUT
 
