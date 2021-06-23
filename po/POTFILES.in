@@ -1,2 +1,5 @@
 [encoding: UTF-8]
 plugins/updater/updater.c
+src/installer.c
+data/lxplug-updater.ui
+data/pwdlpu.sh

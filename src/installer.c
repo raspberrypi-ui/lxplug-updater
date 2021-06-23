@@ -53,7 +53,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_pbv;
 
 gboolean success = FALSE;
-int calls;
 
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */

@@ -57,25 +57,49 @@ typedef struct {
     GtkWidget *tray_icon;           /* Displayed image */
     config_setting_t *settings;     /* Plugin settings */
     GtkWidget *menu;                /* Popup menu */
-    int calls;
-    int n_updates;
-    gchar **ids;
-    GtkWidget *update_dlg;
-    int interval;
-    guint timer;
+    GtkWidget *update_dlg;          /* Widget used to display pending update list */
+    int calls;                      /* Counter of number of attempts to sync clock */
+    int n_updates;                  /* Number of pending updates */
+    gchar **ids;                    /* ID strings for pending updates */
+    int interval;                   /* Number of hours between periodic checks */
+    guint timer;                    /* Periodic check timer ID */
 } UpdaterPlugin;
 
 /* Prototypes */
 
-static void updater_popup_set_position (GtkMenu *menu, gint *px, gint *py, gboolean *push_in, gpointer data);
-static void update_icon (UpdaterPlugin *up, gboolean hide);
-static gboolean idle_icon_update (gpointer data);
+static gboolean net_available (void);
+static gboolean clock_synced (void);
+static gboolean periodic_check (gpointer data);
+static void check_for_updates (gpointer user_data);
+static gboolean ntp_check (gpointer data);
+static gpointer refresh_update_cache (gpointer data);
+static void refresh_cache_done (PkTask *task, GAsyncResult *res, gpointer data);
+static gboolean filter_fn (PkPackage *package, gpointer user_data);
+static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data);
+static void install_updates (GtkWidget *widget, gpointer user_data);
+static void launch_installer (void);
+static void show_updates (GtkWidget *widget, gpointer user_data);
+static void handle_close_update_dialog (GtkButton *button, gpointer user_data);
+static void handle_close_and_install (GtkButton *button, gpointer user_data);
+static gint delete_update_dialog (GtkWidget *widget, GdkEvent *event, gpointer user_data);
 static void show_menu (UpdaterPlugin *up);
 static void hide_menu (UpdaterPlugin *up);
+static gboolean init_icon (gpointer data);
+static void update_icon (UpdaterPlugin *up, gboolean hide);
+static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *settings);
+static gboolean updater_button_press_event (GtkWidget *widget, GdkEventButton *event, LXPanel *panel);
+static void updater_configuration_changed (LXPanel *panel, GtkWidget *p);
+static gboolean updater_control_msg (GtkWidget *plugin, const char *cmd);
+static GtkWidget *updater_configure (LXPanel *panel, GtkWidget *p);
+static gboolean updater_apply_configuration (gpointer user_data);
+static void updater_destructor (gpointer user_data);
+
+
+/* Utility functions */
 
 static gboolean net_available (void)
 {
-    if (!system ("hostname -I | tr ' ' \\\\n | grep \\\\. | tr \\\\n ',' | grep -q .")) return TRUE;
+    if (system ("hostname -I | grep -q \\\\.") == 0) return TRUE;
     else return FALSE;
 }
 
@@ -90,6 +114,81 @@ static gboolean clock_synced (void)
         if (system ("timedatectl status | grep -q \"synchronized: yes\"") == 0) return TRUE;
     }
     return FALSE;
+}
+
+
+/* Functions for async PackageKit check for pending updates */
+
+static gboolean periodic_check (gpointer data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) data;
+    check_for_updates (up);
+    return TRUE;
+}
+
+static void check_for_updates (gpointer user_data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+
+    if (!net_available ())
+    {
+        DEBUG ("No network connection - update check failed");
+        return;
+    }
+
+    if (!clock_synced ())
+    {
+        DEBUG ("Synchronising clock");
+        up->calls = 0;
+        g_timeout_add_seconds (5, ntp_check, up);
+        return;
+    }
+
+    DEBUG ("Checking for updates");
+    g_thread_new (NULL, refresh_update_cache, up);
+}
+
+static gboolean ntp_check (gpointer data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) data;
+
+    if (clock_synced ())
+    {
+        DEBUG ("Clock synced - checking for updates");
+        g_thread_new (NULL, refresh_update_cache, up);
+        return FALSE;
+    }
+
+    if (up->calls++ > 120)
+    {
+        DEBUG ("Couldn't sync clock - update check failed");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static gpointer refresh_update_cache (gpointer data)
+{
+    PkTask *task = pk_task_new ();
+    pk_client_refresh_cache_async (PK_CLIENT (task), TRUE, NULL, NULL, NULL, (GAsyncReadyCallback) refresh_cache_done, data);
+    return NULL;
+}
+
+static void refresh_cache_done (PkTask *task, GAsyncResult *res, gpointer data)
+{
+    GError *error = NULL;
+    PkResults *results = pk_task_generic_finish (task, res, &error);
+
+    if (error != NULL)
+    {
+        DEBUG ("Error updating cache - %s", error->message);
+        g_error_free (error);
+        return;
+    }
+
+    DEBUG ("Cache updated - comparing versions");
+    pk_client_get_updates_async (PK_CLIENT (task), PK_FILTER_ENUM_NONE, NULL, NULL, NULL, (GAsyncReadyCallback) check_updates_done, data);
 }
 
 static gboolean filter_fn (PkPackage *package, gpointer user_data)
@@ -125,7 +224,7 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
     }
 
     up->n_updates = pk_package_sack_get_size (fsack);
-    g_strfreev (up->ids)
+    g_strfreev (up->ids);
     if (up->n_updates > 0)
     {
         DEBUG ("Check complete - %d updates available", up->n_updates);
@@ -141,69 +240,12 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
     g_object_unref (fsack);
 }
 
-static void refresh_cache_done (PkTask *task, GAsyncResult *res, gpointer data)
+
+/* Functions to launch installer process */
+
+static void install_updates (GtkWidget *widget, gpointer user_data)
 {
-    GError *error = NULL;
-    PkResults *results = pk_task_generic_finish (task, res, &error);
-
-    if (error != NULL)
-    {
-        DEBUG ("Error updating cache - %s", error->message);
-        g_error_free (error);
-        return;
-    }
-
-    DEBUG ("Cache updated - comparing versions");
-    pk_client_get_updates_async (PK_CLIENT (task), PK_FILTER_ENUM_NONE, NULL, NULL, NULL, (GAsyncReadyCallback) check_updates_done, data);
-}
-
-static gpointer refresh_update_cache (gpointer data)
-{
-    PkTask *task = pk_task_new ();
-    pk_client_refresh_cache_async (PK_CLIENT (task), TRUE, NULL, NULL, NULL, (GAsyncReadyCallback) refresh_cache_done, data);
-    return NULL;
-}
-
-static gboolean ntp_check (gpointer data)
-{
-    UpdaterPlugin *up = (UpdaterPlugin *) data;
-
-    if (clock_synced ())
-    {
-        DEBUG ("Clock synced - checking for updates");
-        g_thread_new (NULL, refresh_update_cache, up);
-        return FALSE;
-    }
-
-    if (up->calls++ > 120)
-    {
-        DEBUG ("Couldn't sync clock - update check failed");
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static void check_for_updates (gpointer user_data)
-{
-    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
-
-    if (!net_available ())
-    {
-        DEBUG ("No network connection - update check failed");
-        return;
-    }
-
-    if (!clock_synced ())
-    {
-        DEBUG ("Synchronising clock");
-        up->calls = 0;
-        g_timeout_add_seconds (5, ntp_check, up);
-        return;
-    }
-
-    DEBUG ("Checking for updates");
-    g_thread_new (NULL, refresh_update_cache, up);
+    if (net_available () && clock_synced ()) launch_installer ();
 }
 
 static void launch_installer (void)
@@ -215,38 +257,8 @@ static void launch_installer (void)
     g_strfreev (environ);
 }
 
-static void install_updates (GtkWidget *widget, gpointer user_data)
-{
-    if (net_available () && clock_synced ()) launch_installer ();
-}
 
-static void handle_close_update_dialog (GtkButton *button, gpointer user_data)
-{
-    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
-    if (up->update_dlg)
-    {
-        gtk_widget_destroy (up->update_dlg);
-        up->update_dlg = NULL;
-    }
-}
-
-static void handle_close_and_install (GtkButton *button, gpointer user_data)
-{
-    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
-    if (up->update_dlg)
-    {
-        gtk_widget_destroy (up->update_dlg);
-        up->update_dlg = NULL;
-    }
-    if (net_available () && clock_synced ()) launch_installer ();
-}
-
-static gint delete_update_dialog (GtkWidget *widget, GdkEvent *event, gpointer user_data)
-{
-    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
-    handle_close_update_dialog (NULL, user_data);
-    return TRUE;
-}
+/* Dialog box showing pending updates */
 
 static void show_updates (GtkWidget *widget, gpointer user_data)
 {
@@ -281,45 +293,36 @@ static void show_updates (GtkWidget *widget, gpointer user_data)
     gtk_widget_show_all (up->update_dlg);
 }
 
-/* Updater functions */
-
-static void updater_popup_set_position (GtkMenu *menu, gint *px, gint *py, gboolean *push_in, gpointer data)
+static void handle_close_update_dialog (GtkButton *button, gpointer user_data)
 {
-    UpdaterPlugin *up = (UpdaterPlugin *) data;
-    /* Determine the coordinates. */
-    lxpanel_plugin_popup_set_position_helper (up->panel, up->plugin, GTK_WIDGET (menu), px, py);
-    *push_in = TRUE;
-}
-
-static void update_icon (UpdaterPlugin *up, gboolean hide)
-{
-    /* if updates are available, show the icon */
-    if (up->n_updates && !hide)
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+    if (up->update_dlg)
     {
-        gtk_widget_show_all (up->plugin);
-        gtk_widget_set_sensitive (up->plugin, TRUE);
-    }
-    else
-    {
-        gtk_widget_hide (up->plugin);
-        gtk_widget_set_sensitive (up->plugin, FALSE);
+        gtk_widget_destroy (up->update_dlg);
+        up->update_dlg = NULL;
     }
 }
 
-static gboolean init_icon (gpointer data)
+static void handle_close_and_install (GtkButton *button, gpointer user_data)
 {
-    UpdaterPlugin *up = (UpdaterPlugin *) data;
-    update_icon (up, TRUE);
-    check_for_updates (up);
-    return FALSE;
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+    if (up->update_dlg)
+    {
+        gtk_widget_destroy (up->update_dlg);
+        up->update_dlg = NULL;
+    }
+    if (net_available () && clock_synced ()) launch_installer ();
 }
 
-static gboolean periodic_check (gpointer data)
+static gint delete_update_dialog (GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
-    UpdaterPlugin *up = (UpdaterPlugin *) data;
-    check_for_updates (up);
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+    handle_close_update_dialog (NULL, user_data);
     return TRUE;
 }
+
+
+/* Menu */
 
 static void show_menu (UpdaterPlugin *up)
 {
@@ -352,56 +355,36 @@ static void hide_menu (UpdaterPlugin *up)
 	}
 }
 
-/* Handler for menu button click */
-static gboolean updater_button_press_event (GtkWidget *widget, GdkEventButton *event, LXPanel *panel)
+
+/* Icon */
+
+static gboolean init_icon (gpointer data)
 {
-    UpdaterPlugin *up = lxpanel_plugin_get_data (widget);
-
-#ifdef ENABLE_NLS
-    textdomain (GETTEXT_PACKAGE);
-#endif
-    /* Show or hide the popup menu on left-click */
-    if (event->button == 1)
-    {
-        show_menu (up);
-        return TRUE;
-    }
-    else return FALSE;
-}
-
-/* Handler for system config changed message from panel */
-static void updater_configuration_changed (LXPanel *panel, GtkWidget *p)
-{
-    UpdaterPlugin *up = lxpanel_plugin_get_data (p);
-
-    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning-symbolic");
-}
-
-/* Handler for control message from panel */
-static gboolean updater_control_msg (GtkWidget *plugin, const char *cmd)
-{
-    UpdaterPlugin *up = lxpanel_plugin_get_data (plugin);
-
-    if (!strncmp (cmd, "check", 5))
-    {
-        update_icon (up, TRUE);
-        check_for_updates (up);
-        return TRUE;
-    }
-
+    UpdaterPlugin *up = (UpdaterPlugin *) data;
+    update_icon (up, TRUE);
+    check_for_updates (up);
     return FALSE;
 }
 
-/* Plugin destructor. */
-static void updater_destructor (gpointer user_data)
+static void update_icon (UpdaterPlugin *up, gboolean hide)
 {
-    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
-
-    /* Deallocate memory */
-    g_free (up);
+    /* if updates are available, show the icon */
+    if (up->n_updates && !hide)
+    {
+        gtk_widget_show_all (up->plugin);
+        gtk_widget_set_sensitive (up->plugin, TRUE);
+    }
+    else
+    {
+        gtk_widget_hide (up->plugin);
+        gtk_widget_set_sensitive (up->plugin, FALSE);
+    }
 }
 
-/* Plugin constructor. */
+
+/* Plugin functions */
+
+/* Plugin constructor */
 static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *settings)
 {
     /* Allocate and initialize plugin context */
@@ -450,6 +433,60 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
     return up->plugin;
 }
 
+/* Handler for menu button click */
+static gboolean updater_button_press_event (GtkWidget *widget, GdkEventButton *event, LXPanel *panel)
+{
+    UpdaterPlugin *up = lxpanel_plugin_get_data (widget);
+
+#ifdef ENABLE_NLS
+    textdomain (GETTEXT_PACKAGE);
+#endif
+    /* Show or hide the popup menu on left-click */
+    if (event->button == 1)
+    {
+        show_menu (up);
+        return TRUE;
+    }
+    else return FALSE;
+}
+
+/* Handler for system config changed message from panel */
+static void updater_configuration_changed (LXPanel *panel, GtkWidget *p)
+{
+    UpdaterPlugin *up = lxpanel_plugin_get_data (p);
+
+    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning-symbolic");
+}
+
+/* Handler for control message from panel */
+static gboolean updater_control_msg (GtkWidget *plugin, const char *cmd)
+{
+    UpdaterPlugin *up = lxpanel_plugin_get_data (plugin);
+
+    if (!strncmp (cmd, "check", 5))
+    {
+        update_icon (up, TRUE);
+        check_for_updates (up);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/* Handler to open config dialog */
+static GtkWidget *updater_configure (LXPanel *panel, GtkWidget *p)
+{
+    UpdaterPlugin *up = lxpanel_plugin_get_data (p);
+#ifdef ENABLE_NLS
+    textdomain (GETTEXT_PACKAGE);
+#endif
+    return lxpanel_generic_config_dlg(_("Updater"), panel,
+        updater_apply_configuration, p,
+        _("Hours between checks for updates"), &up->interval, CONF_TYPE_INT,
+        NULL);
+}
+
+/* Handler on closing config dialog */
 static gboolean updater_apply_configuration (gpointer user_data)
 {
     UpdaterPlugin *up = lxpanel_plugin_get_data ((GtkWidget *) user_data);
@@ -462,16 +499,13 @@ static gboolean updater_apply_configuration (gpointer user_data)
     update_icon (up, FALSE);
 }
 
-static GtkWidget *updater_configure (LXPanel *panel, GtkWidget *p)
+/* Plugin destructor. */
+static void updater_destructor (gpointer user_data)
 {
-    UpdaterPlugin *up = lxpanel_plugin_get_data (p);
-#ifdef ENABLE_NLS
-    textdomain (GETTEXT_PACKAGE);
-#endif
-    return lxpanel_generic_config_dlg(_("Updater"), panel,
-        updater_apply_configuration, p,
-        _("Hours between checks for updates"), &up->interval, CONF_TYPE_INT,
-        NULL);
+    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
+
+    /* Deallocate memory */
+    g_free (up);
 }
 
 FM_DEFINE_MODULE(lxpanel_gtk, updater)
@@ -487,3 +521,6 @@ LXPanelPluginInit fm_module_init_lxpanel_gtk = {
     .control = updater_control_msg,
     .gettext_package = GETTEXT_PACKAGE
 };
+
+
+/* End of file */
