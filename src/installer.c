@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 Raspberry Pi (Trading) Ltd.
+Copyright (c) 2021 Raspberry Pi (Trading) Ltd.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -60,41 +60,15 @@ int calls;
 /* Prototypes                                                                 */
 /*----------------------------------------------------------------------------*/
 
-static gboolean net_available (void);
-static gboolean clock_synced (void);
 static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
 static void message (char *msg, int prog);
 static gboolean quit (GtkButton *button, gpointer data);
 static gboolean refresh_cache (gpointer data);
+static void compare_versions (PkTask *task, GAsyncResult *res, gpointer data);
 static void start_install (PkTask *task, GAsyncResult *res, gpointer data);
-static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data);
 static void install_done (PkTask *task, GAsyncResult *res, gpointer data);
 static gboolean close_end (gpointer data);
 static void progress (PkProgress *progress, PkProgressType *type, gpointer data);
-
-
-/*----------------------------------------------------------------------------*/
-/* Helper functions for system status                                         */
-/*----------------------------------------------------------------------------*/
-
-static gboolean net_available (void)
-{
-    if (system ("hostname -I | grep -q \\\\.") == 0) return TRUE;
-    else return FALSE;
-}
-
-static gboolean clock_synced (void)
-{
-    if (system ("test -e /usr/sbin/ntpd") == 0)
-    {
-        if (system ("ntpq -p | grep -q ^\\*") == 0) return TRUE;
-    }
-    else
-    {
-        if (system ("timedatectl status | grep -q \"synchronized: yes\"") == 0) return TRUE;
-    }
-    return FALSE;
-}
 
 
 /*----------------------------------------------------------------------------*/
@@ -141,7 +115,7 @@ static void message (char *msg, int prog)
         GtkBuilder *builder;
 
         builder = gtk_builder_new ();
-        printf ("%d\n", gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/ui/lxplug-updater.ui", NULL));
+        gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/ui/lxplug-updater.ui", NULL);
 
         msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "modal");
 
@@ -151,7 +125,6 @@ static void message (char *msg, int prog)
 
         gtk_label_set_text (GTK_LABEL (msg_msg), msg);
 
-        gtk_widget_show_all (msg_dlg);
         g_object_unref (builder);
     }
     else gtk_label_set_text (GTK_LABEL (msg_msg), msg);
@@ -166,6 +139,7 @@ static void message (char *msg, int prog)
         gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), progress);
     }
     else if (prog == -1) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
+    gtk_widget_show (msg_dlg);
 }
 
 static gboolean quit (GtkButton *button, gpointer data)
@@ -193,72 +167,66 @@ static gboolean refresh_cache (gpointer data)
 
     task = pk_task_new ();
 
-    pk_client_refresh_cache_async (PK_CLIENT (task), TRUE, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) start_install, NULL);
+    pk_client_refresh_cache_async (PK_CLIENT (task), TRUE, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) compare_versions, NULL);
     return FALSE;
+}
+
+static void compare_versions (PkTask *task, GAsyncResult *res, gpointer data)
+{
+    if (!error_handler (task, res, _("updating cache"))) return;
+
+    message (_("Comparing versions - please wait..."), -1);
+
+    pk_client_get_updates_async (PK_CLIENT (task), PK_FILTER_ENUM_NONE, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) start_install, data);
+}
+
+static gboolean filter_fn (PkPackage *package, gpointer user_data)
+{
+    if (strstr (pk_package_get_arch (package), "amd64")) return FALSE;
+    return TRUE;
 }
 
 static void start_install (PkTask *task, GAsyncResult *res, gpointer data)
 {
-    if (!error_handler (task, res, _("updating cache"))) return;
+    PkPackageSack *sack = NULL, *fsack;
+    gchar **ids;
 
-    message (_("Installing - please wait..."), -1);
-
-    pk_client_resolve_async (PK_CLIENT (task), 0, pnames, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) resolve_done, NULL);
-}
-
-static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
-{
-    PkResults *results;
-    PkPackageSack *sack;
-    GPtrArray *array;
-    PkPackage *item;
-    PkInfoEnum info;
-    gchar *package_id;
-    gchar *pinst[2];
-
-    results = error_handler (task, res, _("finding packages"));
+    PkResults *results = error_handler (task, res, _("comparing versions"));
     if (!results) return;
 
-    sack = pk_results_get_package_sack (results);
-    array = pk_package_sack_get_array (sack);
-    if (array->len == 0)
+    if (system ("raspi-config nonint is_pi"))
     {
-        message (_("Package not found - exiting"), -3);
+        sack = pk_results_get_package_sack (results);
+        fsack = pk_package_sack_filter (sack, filter_fn, data);
     }
     else
     {
-        item = g_ptr_array_index (array, 0);
-        g_object_get (item, "info", &info, "package-id", &package_id, NULL);
-
-        if (info == PK_INFO_ENUM_INSTALLED)
-        {
-            message (_("Already installed - exiting"), -3);
-        }
-        else
-        {
-            pinst[0] = package_id;
-            pinst[1] = NULL;
-
-            pk_task_install_packages_async (task, pinst, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) install_done, NULL);
-        }
+        fsack = pk_results_get_package_sack (results);
     }
 
-    g_ptr_array_unref (array);
-    g_object_unref (sack);
+    if (pk_package_sack_get_size (fsack) > 0)
+    {
+        message (_("Installing updates - please wait..."), -1);
+
+        ids = pk_package_sack_get_ids (fsack);
+        pk_task_update_packages_async (task, ids, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) install_done, NULL);
+        g_strfreev (ids);
+    }
+    else
+    {
+        message (_("System is up to date"), -2);
+        g_timeout_add_seconds (2, close_end, NULL);
+    }
+
+    if (sack) g_object_unref (sack);
+    g_object_unref (fsack);
 }
 
 static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
 {
     if (!error_handler (task, res, _("installing packages"))) return;
 
-    if (needs_reboot)
-    {
-        message (_("Installation complete - rebooting"), -2);
-    }
-    else
-    {
-        message (_("Installation complete"), -2);
-    }
+    message (_("System is up to date"), -2);
 
     g_timeout_add_seconds (2, close_end, NULL);
 }
@@ -270,8 +238,6 @@ static gboolean close_end (gpointer data)
         gtk_widget_destroy (GTK_WIDGET (msg_dlg));
         msg_dlg = NULL;
     }
-
-    if (needs_reboot) system ("reboot");
 
     gtk_main_quit ();
     return FALSE;
@@ -333,37 +299,6 @@ int main (int argc, char *argv[])
     char *buf;
     int res;
 
-    // check a package name was supplied
-    if (argc < 2)
-    {
-        printf ("No package name specified\n");
-        return -1;
-    }
-
-    // check the supplied package exists and is not already installed 
-    buf = g_strdup_printf ("apt-cache policy %s | grep -q \"Installed: (none)\"", argv[1]);
-    res = system (buf);
-    g_free (buf);
-    if (res != 0)
-    {
-        printf ("Package not found or already installed\n");
-        return -1;
-    }
-
-    // check the network is connected
-    if (!net_available ())
-    {
-        printf ("No network connection\n");
-        return -1;
-    }
-
-    // check the clock is synced (as otherwise apt is unhappy)
-    if (!clock_synced ())
-    {
-        printf ("Clock not synchronised - try again later\n");
-        return -1;
-    }
-
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
@@ -374,13 +309,6 @@ int main (int argc, char *argv[])
     // GTK setup
     gtk_init (&argc, &argv);
     gtk_icon_theme_prepend_search_path (gtk_icon_theme_get_default(), PACKAGE_DATA_DIR);
-
-    // create a package name array using the command line argument
-    pnames[0] = argv[1];
-    pnames[1] = NULL;
-
-    if (argc > 2 && !g_strcmp0 (argv[2], "reboot")) needs_reboot = TRUE;
-    else needs_reboot = FALSE;
 
     g_idle_add (refresh_cache, NULL);
 

@@ -91,7 +91,6 @@ static gboolean clock_synced (void)
 
 static gboolean filter_fn (PkPackage *package, gpointer user_data)
 {
-    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
     if (strstr (pk_package_get_arch (package), "amd64")) return FALSE;
     return TRUE;
 }
