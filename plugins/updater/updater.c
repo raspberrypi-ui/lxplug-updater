@@ -125,6 +125,7 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
     }
 
     up->n_updates = pk_package_sack_get_size (fsack);
+    g_strfreev (up->ids)
     if (up->n_updates > 0)
     {
         DEBUG ("Check complete - %d updates available", up->n_updates);
@@ -169,9 +170,6 @@ static gboolean ntp_check (gpointer data)
 
     if (clock_synced ())
     {
-        up->n_updates = 0;
-        g_strfreev (up->ids);
-
         DEBUG ("Clock synced - checking for updates");
         g_thread_new (NULL, refresh_update_cache, up);
         return FALSE;
@@ -203,9 +201,6 @@ static void check_for_updates (gpointer user_data)
         g_timeout_add_seconds (5, ntp_check, up);
         return;
     }
-
-    up->n_updates = 0;
-    g_strfreev (up->ids);
 
     DEBUG ("Checking for updates");
     g_thread_new (NULL, refresh_update_cache, up);
