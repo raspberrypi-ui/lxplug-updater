@@ -84,6 +84,8 @@ static void handle_close_and_install (GtkButton *button, gpointer user_data);
 static gint delete_update_dialog (GtkWidget *widget, GdkEvent *event, gpointer user_data);
 static void show_menu (UpdaterPlugin *up);
 static void hide_menu (UpdaterPlugin *up);
+static void message (char *msg, int prog);
+static gboolean close_msg (GtkButton *button, gpointer data);
 static gboolean init_icon (gpointer data);
 static void update_icon (UpdaterPlugin *up, gboolean hide);
 static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *settings);
@@ -245,7 +247,19 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
 
 static void install_updates (GtkWidget *widget, gpointer user_data)
 {
-    if (net_available () && clock_synced ()) launch_installer ();
+    if (!net_available ())
+    {
+        message (_("No network connection - cannot install updates"), -3);
+        return;
+    }
+
+    if (!clock_synced ())
+    {
+        message (_("Clock not synchronised - cannot install updates"), -3);
+        return;
+    }
+
+    launch_installer ();
 }
 
 static void launch_installer (void)
@@ -353,6 +367,46 @@ static void hide_menu (UpdaterPlugin *up)
 		gtk_widget_destroy (up->menu);
 		up->menu = NULL;
 	}
+}
+
+
+/* Messages */
+
+static void message (char *msg, int prog)
+{
+    GtkBuilder *builder;
+    GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn;
+
+    builder = gtk_builder_new ();
+    gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/ui/lxplug-updater.ui", NULL);
+
+    msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "modal");
+
+    msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "modal_msg");
+    msg_pb = (GtkWidget *) gtk_builder_get_object (builder, "modal_pb");
+    msg_btn = (GtkWidget *) gtk_builder_get_object (builder, "modal_ok");
+
+    gtk_label_set_text (GTK_LABEL (msg_msg), msg);
+
+    g_object_unref (builder);
+
+    gtk_widget_set_visible (msg_btn, prog == -3);
+    gtk_widget_set_visible (msg_pb, prog > -2);
+    g_signal_connect (msg_btn, "clicked", G_CALLBACK (close_msg), msg_dlg);
+
+    if (prog >= 0)
+    {
+        float progress = prog / 100.0;
+        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), progress);
+    }
+    else if (prog == -1) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
+    gtk_widget_show (msg_dlg);
+}
+
+static gboolean close_msg (GtkButton *button, gpointer data)
+{
+    gtk_widget_destroy (GTK_WIDGET (data));
+    return FALSE;
 }
 
 
