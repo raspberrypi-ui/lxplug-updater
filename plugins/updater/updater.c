@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
 #include <errno.h>
 #include <locale.h>
 #include <stdlib.h>
@@ -48,7 +49,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SECS_PER_HOUR 3600L
 
-/* Plug-in global data */
+/*----------------------------------------------------------------------------*/
+/* Plug-in global data                                                        */
+/*----------------------------------------------------------------------------*/
 
 typedef struct {
 
@@ -65,7 +68,10 @@ typedef struct {
     guint timer;                    /* Periodic check timer ID */
 } UpdaterPlugin;
 
-/* Prototypes */
+
+/*----------------------------------------------------------------------------*/
+/* Prototypes                                                                 */
+/*----------------------------------------------------------------------------*/
 
 static gboolean net_available (void);
 static gboolean clock_synced (void);
@@ -97,7 +103,9 @@ static gboolean updater_apply_configuration (gpointer user_data);
 static void updater_destructor (gpointer user_data);
 
 
-/* Utility functions */
+/*----------------------------------------------------------------------------*/
+/* Utility functions                                                          */
+/*----------------------------------------------------------------------------*/
 
 static gboolean net_available (void)
 {
@@ -119,7 +127,9 @@ static gboolean clock_synced (void)
 }
 
 
-/* Functions for async PackageKit check for pending updates */
+/*----------------------------------------------------------------------------*/
+/* Handlers for PackageKit asynchronous check for updates                     */
+/*----------------------------------------------------------------------------*/
 
 static gboolean periodic_check (gpointer data)
 {
@@ -243,7 +253,9 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
 }
 
 
-/* Functions to launch installer process */
+/*----------------------------------------------------------------------------*/
+/* Launch installer process                                                   */
+/*----------------------------------------------------------------------------*/
 
 static void install_updates (GtkWidget *widget, gpointer user_data)
 {
@@ -272,7 +284,9 @@ static void launch_installer (void)
 }
 
 
-/* Dialog box showing pending updates */
+/*----------------------------------------------------------------------------*/
+/* Dialog box showing pending updates                                         */
+/*----------------------------------------------------------------------------*/
 
 static void show_updates (GtkWidget *widget, gpointer user_data)
 {
@@ -336,7 +350,9 @@ static gint delete_update_dialog (GtkWidget *widget, GdkEvent *event, gpointer u
 }
 
 
-/* Menu */
+/*----------------------------------------------------------------------------*/
+/* Menu                                                                       */
+/*----------------------------------------------------------------------------*/
 
 static void show_menu (UpdaterPlugin *up)
 {
@@ -370,7 +386,9 @@ static void hide_menu (UpdaterPlugin *up)
 }
 
 
-/* Messages */
+/*----------------------------------------------------------------------------*/
+/* Error box                                                                  */
+/*----------------------------------------------------------------------------*/
 
 static void message (char *msg, int prog)
 {
@@ -410,7 +428,9 @@ static gboolean close_msg (GtkButton *button, gpointer data)
 }
 
 
-/* Icon */
+/*----------------------------------------------------------------------------*/
+/* Icon                                                                       */
+/*----------------------------------------------------------------------------*/
 
 static gboolean init_icon (gpointer data)
 {
@@ -436,7 +456,9 @@ static void update_icon (UpdaterPlugin *up, gboolean hide)
 }
 
 
-/* Plugin functions */
+/*----------------------------------------------------------------------------*/
+/* Plugin functions                                                           */
+/*----------------------------------------------------------------------------*/
 
 /* Plugin constructor */
 static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *settings)
@@ -578,3 +600,4 @@ LXPanelPluginInit fm_module_init_lxpanel_gtk = {
 
 
 /* End of file */
+/*----------------------------------------------------------------------------*/

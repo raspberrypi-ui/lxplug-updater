@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <config.h>
 #endif
 
-#define _GNU_SOURCE
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
@@ -58,48 +57,15 @@ gboolean success = FALSE;
 /* Prototypes                                                                 */
 /*----------------------------------------------------------------------------*/
 
-static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
 static void message (char *msg, int prog);
 static gboolean quit (GtkButton *button, gpointer data);
+static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
+static void progress (PkProgress *progress, PkProgressType *type, gpointer data);
 static gboolean refresh_cache (gpointer data);
 static void compare_versions (PkTask *task, GAsyncResult *res, gpointer data);
 static void start_install (PkTask *task, GAsyncResult *res, gpointer data);
 static void install_done (PkTask *task, GAsyncResult *res, gpointer data);
 static gboolean close_end (gpointer data);
-static void progress (PkProgress *progress, PkProgressType *type, gpointer data);
-
-
-/*----------------------------------------------------------------------------*/
-/* Helper functions for async operations                                      */
-/*----------------------------------------------------------------------------*/
-
-static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
-{
-    PkResults *results;
-    PkError *pkerror;
-    GError *error = NULL;
-    gchar *buf;
-
-    results = pk_task_generic_finish (task, res, &error);
-    if (error != NULL)
-    {
-        buf = g_strdup_printf (_("Error %s - %s"), desc, error->message);
-        message (buf, -3);
-        g_free (buf);
-        return NULL;
-    }
-
-    pkerror = pk_results_get_error_code (results);
-    if (pkerror != NULL)
-    {
-        buf = g_strdup_printf (_("Error %s - %s"), desc, pk_error_get_details (pkerror));
-        message (buf, -3);
-        g_free (buf);
-        return NULL;
-    }
-
-    return results;
-}
 
 
 /*----------------------------------------------------------------------------*/
@@ -155,7 +121,74 @@ static gboolean quit (GtkButton *button, gpointer data)
 
 
 /*----------------------------------------------------------------------------*/
-/* Handlers for asynchronous install sequence                                 */
+/* Helper functions for async operations                                      */
+/*----------------------------------------------------------------------------*/
+
+static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
+{
+    PkResults *results;
+    PkError *pkerror;
+    GError *error = NULL;
+    gchar *buf;
+
+    results = pk_task_generic_finish (task, res, &error);
+    if (error != NULL)
+    {
+        buf = g_strdup_printf (_("Error %s - %s"), desc, error->message);
+        message (buf, -3);
+        g_free (buf);
+        return NULL;
+    }
+
+    pkerror = pk_results_get_error_code (results);
+    if (pkerror != NULL)
+    {
+        buf = g_strdup_printf (_("Error %s - %s"), desc, pk_error_get_details (pkerror));
+        message (buf, -3);
+        g_free (buf);
+        return NULL;
+    }
+
+    return results;
+}
+
+static void progress (PkProgress *progress, PkProgressType *type, gpointer data)
+{
+    char *buf, *name;
+    int role = pk_progress_get_role (progress);
+    int status = pk_progress_get_status (progress);
+
+    if (msg_dlg)
+    {
+        switch (role)
+        {
+            case PK_ROLE_ENUM_REFRESH_CACHE :       if (status == PK_STATUS_ENUM_LOADING_CACHE)
+                                                        message (_("Updating package data - please wait..."), pk_progress_get_percentage (progress));
+                                                    else
+                                                        gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
+                                                    break;
+
+            case PK_ROLE_ENUM_GET_DETAILS :         if (status == PK_STATUS_ENUM_LOADING_CACHE)
+                                                        message (_("Checking package details - please wait..."), pk_progress_get_percentage (progress));
+                                                    else
+                                                        gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
+                                                    break;
+
+            case PK_ROLE_ENUM_UPDATE_PACKAGES :    if (status == PK_STATUS_ENUM_DOWNLOAD || status == PK_STATUS_ENUM_INSTALL)
+                                                    {
+                                                        buf = g_strdup_printf (_("%s packages - please wait..."), status == PK_STATUS_ENUM_INSTALL ? _("Installing") : _("Downloading"));
+                                                        message (buf, pk_progress_get_percentage (progress));
+                                                    }
+                                                    else
+                                                        gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
+                                                    break;
+        }
+    }
+}
+
+
+/*----------------------------------------------------------------------------*/
+/* Handlers for PackageKit asynchronous install sequence                      */
 /*----------------------------------------------------------------------------*/
 
 static gboolean refresh_cache (gpointer data)
@@ -245,43 +278,9 @@ static gboolean close_end (gpointer data)
     return FALSE;
 }
 
-static void progress (PkProgress *progress, PkProgressType *type, gpointer data)
-{
-    char *buf, *name;
-    int role = pk_progress_get_role (progress);
-    int status = pk_progress_get_status (progress);
-
-    if (msg_dlg)
-    {
-        switch (role)
-        {
-            case PK_ROLE_ENUM_REFRESH_CACHE :       if (status == PK_STATUS_ENUM_LOADING_CACHE)
-                                                        message (_("Updating package data - please wait..."), pk_progress_get_percentage (progress));
-                                                    else
-                                                        gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
-                                                    break;
-
-            case PK_ROLE_ENUM_GET_DETAILS :         if (status == PK_STATUS_ENUM_LOADING_CACHE)
-                                                        message (_("Checking package details - please wait..."), pk_progress_get_percentage (progress));
-                                                    else
-                                                        gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
-                                                    break;
-
-            case PK_ROLE_ENUM_UPDATE_PACKAGES :    if (status == PK_STATUS_ENUM_DOWNLOAD || status == PK_STATUS_ENUM_INSTALL)
-                                                    {
-                                                        buf = g_strdup_printf (_("%s packages - please wait..."), status == PK_STATUS_ENUM_INSTALL ? _("Installing") : _("Downloading"));
-                                                        message (buf, pk_progress_get_percentage (progress));
-                                                    }
-                                                    else
-                                                        gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
-                                                    break;
-        }
-    }
-}
-
 
 /*----------------------------------------------------------------------------*/
-/* Main window                                                                */
+/* Main function                                                              */
 /*----------------------------------------------------------------------------*/
 
 int main (int argc, char *argv[])
@@ -306,6 +305,7 @@ int main (int argc, char *argv[])
 
     return 0;
 }
+
 
 /* End of file                                                                */
 /*----------------------------------------------------------------------------*/
