@@ -61,7 +61,6 @@ typedef struct {
     config_setting_t *settings;     /* Plugin settings */
     GtkWidget *menu;                /* Popup menu */
     GtkWidget *update_dlg;          /* Widget used to display pending update list */
-    int calls;                      /* Counter of number of attempts to sync clock */
     int n_updates;                  /* Number of pending updates */
     gchar **ids;                    /* ID strings for pending updates */
     int interval;                   /* Number of hours between periodic checks */
@@ -77,7 +76,6 @@ static gboolean net_available (void);
 static gboolean clock_synced (void);
 static gboolean periodic_check (gpointer data);
 static void check_for_updates (gpointer user_data);
-static gboolean ntp_check (gpointer data);
 static gpointer refresh_update_cache (gpointer data);
 static void refresh_cache_done (PkTask *task, GAsyncResult *res, gpointer data);
 static gboolean filter_fn (PkPackage *package, gpointer user_data);
@@ -148,36 +146,8 @@ static void check_for_updates (gpointer user_data)
         return;
     }
 
-    if (!clock_synced ())
-    {
-        DEBUG ("Synchronising clock");
-        up->calls = 0;
-        g_timeout_add_seconds (5, ntp_check, up);
-        return;
-    }
-
     DEBUG ("Checking for updates");
     g_thread_new (NULL, refresh_update_cache, up);
-}
-
-static gboolean ntp_check (gpointer data)
-{
-    UpdaterPlugin *up = (UpdaterPlugin *) data;
-
-    if (clock_synced ())
-    {
-        DEBUG ("Clock synced - checking for updates");
-        g_thread_new (NULL, refresh_update_cache, up);
-        return FALSE;
-    }
-
-    if (up->calls++ > 120)
-    {
-        DEBUG ("Couldn't sync clock - update check failed");
-        return FALSE;
-    }
-
-    return TRUE;
 }
 
 static gpointer refresh_update_cache (gpointer data)
@@ -261,13 +231,13 @@ static void install_updates (GtkWidget *widget, gpointer user_data)
 {
     if (!net_available ())
     {
-        message (_("No network connection - cannot install updates"), -3);
+        message (_("No network connection - cannot install updates."), -3);
         return;
     }
 
     if (!clock_synced ())
     {
-        message (_("Clock not synchronised - cannot install updates"), -3);
+        message (_("Clock not synchronised - cannot install updates. Try again in a few minutes."), -3);
         return;
     }
 
@@ -475,7 +445,7 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
 #endif
 
     up->tray_icon = gtk_image_new ();
-    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning-symbolic");
+    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning");
     gtk_widget_set_tooltip_text (up->tray_icon, _("Updates are available - click to install"));
     gtk_widget_set_visible (up->tray_icon, TRUE);
 
@@ -531,7 +501,7 @@ static void updater_configuration_changed (LXPanel *panel, GtkWidget *p)
 {
     UpdaterPlugin *up = lxpanel_plugin_get_data (p);
 
-    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning-symbolic");
+    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning");
 }
 
 /* Handler for control message from panel */
@@ -572,7 +542,6 @@ static gboolean updater_apply_configuration (gpointer user_data)
         up->timer = g_timeout_add_seconds (up->interval * SECS_PER_HOUR, periodic_check, up);
     else
         up->timer = 0;
-    update_icon (up, FALSE);
 }
 
 /* Plugin destructor. */
