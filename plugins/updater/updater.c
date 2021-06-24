@@ -74,7 +74,6 @@ typedef struct {
 
 static gboolean net_available (void);
 static gboolean clock_synced (void);
-static gboolean periodic_check (gpointer data);
 static void check_for_updates (gpointer user_data);
 static gpointer refresh_update_cache (gpointer data);
 static void refresh_cache_done (PkTask *task, GAsyncResult *res, gpointer data);
@@ -90,8 +89,10 @@ static void show_menu (UpdaterPlugin *up);
 static void hide_menu (UpdaterPlugin *up);
 static void message (char *msg, int prog);
 static gboolean close_msg (GtkButton *button, gpointer data);
-static gboolean init_icon (gpointer data);
 static void update_icon (UpdaterPlugin *up, gboolean hide);
+static gboolean init_check (gpointer data);
+static gboolean net_check (gpointer data);
+static gboolean periodic_check (gpointer data);
 static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *settings);
 static gboolean updater_button_press_event (GtkWidget *widget, GdkEventButton *event, LXPanel *panel);
 static void updater_configuration_changed (LXPanel *panel, GtkWidget *p);
@@ -128,13 +129,6 @@ static gboolean clock_synced (void)
 /*----------------------------------------------------------------------------*/
 /* Handlers for PackageKit asynchronous check for updates                     */
 /*----------------------------------------------------------------------------*/
-
-static gboolean periodic_check (gpointer data)
-{
-    UpdaterPlugin *up = (UpdaterPlugin *) data;
-    check_for_updates (up);
-    return TRUE;
-}
 
 static void check_for_updates (gpointer user_data)
 {
@@ -402,14 +396,6 @@ static gboolean close_msg (GtkButton *button, gpointer data)
 /* Icon                                                                       */
 /*----------------------------------------------------------------------------*/
 
-static gboolean init_icon (gpointer data)
-{
-    UpdaterPlugin *up = (UpdaterPlugin *) data;
-    update_icon (up, TRUE);
-    check_for_updates (up);
-    return FALSE;
-}
-
 static void update_icon (UpdaterPlugin *up, gboolean hide)
 {
     /* if updates are available, show the icon */
@@ -423,6 +409,44 @@ static void update_icon (UpdaterPlugin *up, gboolean hide)
         gtk_widget_hide (up->plugin);
         gtk_widget_set_sensitive (up->plugin, FALSE);
     }
+}
+
+
+/*----------------------------------------------------------------------------*/
+/* Timer handlers                                                             */
+/*----------------------------------------------------------------------------*/
+
+static gboolean init_check (gpointer data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) data;
+    update_icon (up, TRUE);
+
+    if (net_available ()) check_for_updates (up);
+    else
+    {
+        DEBUG ("No network connection - polling...");
+        g_timeout_add_seconds (60, net_check, up);
+    }
+    return FALSE;
+}
+
+static gboolean net_check (gpointer data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) data;
+    if (net_available ())
+    {
+        check_for_updates (up);
+        return FALSE;
+    }
+    DEBUG ("No network connection - polling...");
+    return TRUE;
+}
+
+static gboolean periodic_check (gpointer data)
+{
+    UpdaterPlugin *up = (UpdaterPlugin *) data;
+    check_for_updates (up);
+    return TRUE;
 }
 
 
@@ -467,7 +491,7 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
     /* Hide the widget and start the check for updates */
     up->n_updates = 0;
     gtk_widget_show_all (up->plugin);
-    g_idle_add (init_icon, up);
+    g_idle_add (init_check, up);
 
     /* Set timer for update checks */
     if (!config_setting_lookup_int (settings, "Interval", &up->interval)) up->interval = 24;
