@@ -152,7 +152,9 @@
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection"/>
+                  <object class="GtkTreeSelection">
+                    <property name="mode">none</property>
+                  </object>
                 </child>
               </object>
             </child>
