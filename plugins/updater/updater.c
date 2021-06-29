@@ -261,8 +261,7 @@ static void show_updates (GtkWidget *widget, gpointer user_data)
     int count;
     char buffer[1024];
 
-    builder = gtk_builder_new ();
-    gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/ui/lxplug-updater.ui", NULL);
+    builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/ui/lxplug-updater.ui");
     up->update_dlg = (GtkWidget *) gtk_builder_get_object (builder, "update_dlg");
     g_signal_connect (gtk_builder_get_object (builder, "btn_install"), "clicked", G_CALLBACK (handle_close_and_install), up);
     g_signal_connect (gtk_builder_get_object (builder, "btn_close"), "clicked", G_CALLBACK (handle_close_update_dialog), up);
@@ -359,17 +358,12 @@ static void message (char *msg, int prog)
     GtkBuilder *builder;
     GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn;
 
-    builder = gtk_builder_new ();
-    gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/ui/lxplug-updater.ui", NULL);
-
+    builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/ui/lxplug-updater.ui");
     msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "modal");
-
     msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "modal_msg");
     msg_pb = (GtkWidget *) gtk_builder_get_object (builder, "modal_pb");
     msg_btn = (GtkWidget *) gtk_builder_get_object (builder, "modal_ok");
-
     gtk_label_set_text (GTK_LABEL (msg_msg), msg);
-
     g_object_unref (builder);
 
     gtk_widget_set_visible (msg_btn, prog == -3);
