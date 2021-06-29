@@ -1,3 +1,9 @@
+lxplug-updater (0.2) bullseye; urgency=medium
+
+  * Graphic tweaks
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 29 Jun 2021 19:20:02 +0100
+
 lxplug-updater (0.1) bullseye; urgency=medium
 
   * Initial release.
