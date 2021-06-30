@@ -48,6 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #define SECS_PER_HOUR 3600L
+#define UPDATE_ICON "update-avail"
 
 /*----------------------------------------------------------------------------*/
 /* Plug-in global data                                                        */
@@ -463,7 +464,7 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
 #endif
 
     up->tray_icon = gtk_image_new ();
-    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning");
+    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, UPDATE_ICON);
     gtk_widget_set_tooltip_text (up->tray_icon, _("Updates are available - click to install"));
     gtk_widget_set_visible (up->tray_icon, TRUE);
 
@@ -519,7 +520,7 @@ static void updater_configuration_changed (LXPanel *panel, GtkWidget *p)
 {
     UpdaterPlugin *up = lxpanel_plugin_get_data (p);
 
-    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "dialog-warning");
+    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, UPDATE_ICON);
 }
 
 /* Handler for control message from panel */
