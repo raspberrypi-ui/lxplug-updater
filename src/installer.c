@@ -211,6 +211,7 @@ static void progress (PkProgress *progress, PkProgressType *type, gpointer data)
 static gboolean refresh_cache (gpointer data)
 {
     PkTask *task;
+
     message (_("Updating package data - please wait..."), -1);
 
     task = pk_task_new ();

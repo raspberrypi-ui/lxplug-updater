@@ -1,59 +1,138 @@
-# English translations for PACKAGE package.
-# Copyright (C) 2017 THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-#  <simon@raspberrypi.org>, 2017.
+# English translations for lxplug_updater package.
+# Copyright (C) 2021 Raspberry Pi Ltd
+# This file is distributed under the same license as the lxplug_updater package.
+# Simon Long <simon@raspberrypi.com>, 2021.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: lxplug_updater 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-11-20 15:23+0000\n"
-"PO-Revision-Date: 2017-03-06 16:38+0000\n"
-"Last-Translator:  <simon@raspberrypi.org>\n"
-"Language-Team: English (British)\n"
+"POT-Creation-Date: 2021-09-12 14:15+0100\n"
+"PO-Revision-Date: 2021-09-12 14:15+0100\n"
+"Last-Translator: Simon Long <simon@raspberrypi.com>\n"
+"Language-Team: English (British) <(nothing)>\n"
 "Language: en_GB\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ASCII\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../plugins/ejecter/ejecter.c:172
-msgid "Drive was removed without ejecting"
-msgstr "Drive was removed without ejecting"
+#: ../plugins/updater/updater.c:229
+msgid "No network connection - cannot install updates."
+msgstr "No network connection - cannot install updates."
 
-#: ../plugins/ejecter/ejecter.c:172
-msgid "Please use menu to eject before removal"
-msgstr "Please use menu to eject before removal"
+#: ../plugins/updater/updater.c:235
+msgid ""
+"Clock not synchronised - cannot install updates. Try again in a few minutes."
+msgstr ""
+"Clock not synchronised - cannot install updates. Try again in a few minutes."
 
-#: ../plugins/ejecter/ejecter.c:200
+#: ../plugins/updater/updater.c:330
+msgid "Show Updates..."
+msgstr "Show Updates..."
+
+#: ../plugins/updater/updater.c:334
+msgid "Install Updates"
+msgstr "Install Updates"
+
+#: ../plugins/updater/updater.c:469
+msgid "Updates are available - click to install"
+msgstr "Updates are available - click to install"
+
+#: ../plugins/updater/updater.c:549 ../plugins/updater/updater.c:580
+msgid "Updater"
+msgstr "Updater"
+
+#: ../plugins/updater/updater.c:551
+msgid "Hours between checks for updates"
+msgstr "Hours between checks for updates"
+
+#: ../plugins/updater/updater.c:581
+msgid "Checks for updates"
+msgstr "Checks for updates"
+
+#: ../src/installer.c:101
+msgid "Reboot"
+msgstr "Reboot"
+
+#: ../src/installer.c:102
+msgid "Later"
+msgstr "Later"
+
+#: ../src/installer.c:154 ../src/installer.c:163
 #, c-format
-msgid "%s has been ejected"
-msgstr "%s has been ejected"
+msgid "Error %s - %s"
+msgstr "Error %s - %s"
 
-#: ../plugins/ejecter/ejecter.c:201
-msgid "It is now safe to remove the device"
-msgstr "It is now safe to remove the device"
+#: ../src/installer.c:183 ../src/installer.c:215
+msgid "Updating package data - please wait..."
+msgstr "Updating package data - please wait..."
 
-#: ../plugins/ejecter/ejecter.c:206
+#: ../src/installer.c:189
+msgid "Checking package details - please wait..."
+msgstr "Checking package details - please wait..."
+
+#: ../src/installer.c:196
 #, c-format
-msgid "Failed to eject %s"
-msgstr "Failed to eject %s"
+msgid "%s packages - please wait..."
+msgstr "%s packages - please wait..."
 
-#: ../plugins/ejecter/ejecter.c:588
-msgid "Select a drive in menu to eject safely"
-msgstr "Select a drive in menu to eject safely"
+#: ../src/installer.c:196
+msgid "Installing"
+msgstr "Installing"
 
-#: ../plugins/ejecter/ejecter.c:642 ../plugins/ejecter/ejecter.c:652
-msgid "Ejecter"
-msgstr "Ejecter"
+#: ../src/installer.c:196
+msgid "Downloading"
+msgstr "Downloading"
 
-#: ../plugins/ejecter/ejecter.c:644
-msgid "Hide icon when no devices"
-msgstr "Hide icon when no devices"
+#: ../src/installer.c:225
+msgid "updating cache"
+msgstr "updating cache"
 
-#: ../plugins/ejecter/ejecter.c:653
-msgid "Ejects mounted drives"
-msgstr "Ejects mounted drives"
+#: ../src/installer.c:227
+msgid "Comparing versions - please wait..."
+msgstr "Comparing versions - please wait..."
 
-#~ msgid "No ejectable devices"
-#~ msgstr "No ejectable devices"
+#: ../src/installer.c:243
+msgid "comparing versions"
+msgstr "comparing versions"
+
+#: ../src/installer.c:258
+msgid "Installing updates - please wait..."
+msgstr "Installing updates - please wait..."
+
+#: ../src/installer.c:266 ../src/installer.c:281
+msgid "System is up to date"
+msgstr "System is up to date"
+
+#: ../src/installer.c:277
+msgid "installing packages"
+msgstr "installing packages"
+
+#: ../src/installer.c:286
+msgid ""
+"System is up to date.\n"
+"A reboot is required to complete the install. Reboot now or later?"
+msgstr ""
+"System is up to date.\n"
+"A reboot is required to complete the install. Reboot now or later?"
+
+#: ../data/pwdlpu.sh:6
+msgid "Password Required"
+msgstr "Password Required"
+
+#: ../data/lxplug-updater.ui.h:1
+msgid "Available Updates"
+msgstr "Available Updates"
+
+#: ../data/lxplug-updater.ui.h:2
+msgid "Close"
+msgstr "Close"
+
+#: ../data/lxplug-updater.ui.h:3
+msgid "Install"
+msgstr "Install"
+
+#: ../data/lxplug-updater.ui.h:4
+msgid "The following packages can be updated :"
+msgstr "The following packages can be updated :"
