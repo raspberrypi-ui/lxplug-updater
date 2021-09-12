@@ -49,7 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Controls */
 
-static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_pbv;
+static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_pbv, *msg_btn2;
 
 gboolean success = FALSE;
 
@@ -59,6 +59,7 @@ gboolean success = FALSE;
 
 static void message (char *msg, int prog);
 static gboolean quit (GtkButton *button, gpointer data);
+static gboolean reboot (GtkButton *button, gpointer data);
 static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
 static void progress (PkProgress *progress, PkProgressType *type, gpointer data);
 static gboolean refresh_cache (gpointer data);
@@ -83,15 +84,23 @@ static void message (char *msg, int prog)
         msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "modal_msg");
         msg_pb = (GtkWidget *) gtk_builder_get_object (builder, "modal_pb");
         msg_btn = (GtkWidget *) gtk_builder_get_object (builder, "modal_ok");
-        gtk_widget_hide (GTK_WIDGET (gtk_builder_get_object (builder, "modal_cancel")));
+        msg_btn2 = (GtkWidget *) gtk_builder_get_object (builder, "modal_cancel");
         gtk_label_set_text (GTK_LABEL (msg_msg), msg);
         g_object_unref (builder);
     }
     else gtk_label_set_text (GTK_LABEL (msg_msg), msg);
 
-    gtk_widget_set_visible (msg_btn, prog == -3);
+    gtk_widget_set_visible (msg_btn, prog <= -3);
+    gtk_widget_set_visible (msg_btn2, prog == -4);
     gtk_widget_set_visible (msg_pb, prog > -2);
-    g_signal_connect (msg_btn, "clicked", G_CALLBACK (quit), NULL);
+    if (prog != -4) g_signal_connect (msg_btn, "clicked", G_CALLBACK (quit), NULL);
+    else
+    {
+        g_signal_connect (msg_btn2, "clicked", G_CALLBACK (quit), NULL);
+        g_signal_connect (msg_btn, "clicked", G_CALLBACK (reboot), NULL);
+        gtk_button_set_label (GTK_BUTTON (msg_btn), _("Reboot"));
+        gtk_button_set_label (GTK_BUTTON (msg_btn2), _("Later"));
+    }
 
     if (prog >= 0)
     {
@@ -112,6 +121,18 @@ static gboolean quit (GtkButton *button, gpointer data)
     }
 
     gtk_main_quit ();
+    return FALSE;
+}
+
+static gboolean reboot (GtkButton *button, gpointer data)
+{
+    if (msg_dlg)
+    {
+        gtk_widget_destroy (GTK_WIDGET (msg_dlg));
+        msg_dlg = NULL;
+    }
+
+    system ("sync;reboot");
     return FALSE;
 }
 
@@ -190,7 +211,6 @@ static void progress (PkProgress *progress, PkProgressType *type, gpointer data)
 static gboolean refresh_cache (gpointer data)
 {
     PkTask *task;
-
     message (_("Updating package data - please wait..."), -1);
 
     task = pk_task_new ();
@@ -255,10 +275,14 @@ static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
 {
     if (!error_handler (task, res, _("installing packages"))) return;
 
-    message (_("System is up to date"), -3);
-    success = TRUE;
+    if (access ("/run/reboot-required", F_OK))
+    {
+        message (_("System is up to date"), -3);
+        success = TRUE;
 
-    g_timeout_add_seconds (2, close_end, NULL);
+        g_timeout_add_seconds (2, close_end, NULL);
+    }
+    else message (_("System is up to date.\nA reboot is required to complete the install. Reboot now or later?"), -4);
 }
 
 static gboolean close_end (gpointer data)
