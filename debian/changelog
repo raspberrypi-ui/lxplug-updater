@@ -1,3 +1,9 @@
+lxplug-updater (0.4) bullseye; urgency=medium
+
+  * Use notify message to inform user of updates
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 16 Sep 2021 15:40:28 +0100
+
 lxplug-updater (0.3) bullseye; urgency=medium
 
   * Check reboot flag set by install process
