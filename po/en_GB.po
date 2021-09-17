@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxplug_updater 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-12 14:15+0100\n"
+"POT-Creation-Date: 2021-09-17 12:59+0100\n"
 "PO-Revision-Date: 2021-09-12 14:15+0100\n"
 "Last-Translator: Simon Long <simon@raspberrypi.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -17,37 +17,45 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../plugins/updater/updater.c:229
+#: ../plugins/updater/updater.c:209
+msgid ""
+"Updates are available\n"
+"Click the update icon to install"
+msgstr ""
+"Updates are available\n"
+"Click the update icon to install"
+
+#: ../plugins/updater/updater.c:230
 msgid "No network connection - cannot install updates."
 msgstr "No network connection - cannot install updates."
 
-#: ../plugins/updater/updater.c:235
+#: ../plugins/updater/updater.c:236
 msgid ""
 "Clock not synchronised - cannot install updates. Try again in a few minutes."
 msgstr ""
 "Clock not synchronised - cannot install updates. Try again in a few minutes."
 
-#: ../plugins/updater/updater.c:330
+#: ../plugins/updater/updater.c:331
 msgid "Show Updates..."
 msgstr "Show Updates..."
 
-#: ../plugins/updater/updater.c:334
+#: ../plugins/updater/updater.c:335
 msgid "Install Updates"
 msgstr "Install Updates"
 
-#: ../plugins/updater/updater.c:469
+#: ../plugins/updater/updater.c:470
 msgid "Updates are available - click to install"
 msgstr "Updates are available - click to install"
 
-#: ../plugins/updater/updater.c:549 ../plugins/updater/updater.c:580
+#: ../plugins/updater/updater.c:550 ../plugins/updater/updater.c:581
 msgid "Updater"
 msgstr "Updater"
 
-#: ../plugins/updater/updater.c:551
+#: ../plugins/updater/updater.c:552
 msgid "Hours between checks for updates"
 msgstr "Hours between checks for updates"
 
-#: ../plugins/updater/updater.c:581
+#: ../plugins/updater/updater.c:582
 msgid "Checks for updates"
 msgstr "Checks for updates"
 
