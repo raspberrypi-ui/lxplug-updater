@@ -1,3 +1,9 @@
+lxplug-updater (0.5) bullseye; urgency=medium
+
+  * Suppress initial check for updates if wizard is running
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 22 Sep 2021 10:09:00 +0100
+
 lxplug-updater (0.4) bullseye; urgency=medium
 
   * Use notify message to inform user of updates

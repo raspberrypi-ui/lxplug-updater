@@ -418,6 +418,9 @@ static gboolean init_check (gpointer data)
     UpdaterPlugin *up = (UpdaterPlugin *) data;
     update_icon (up, TRUE);
 
+    /* Don't bother with the check if the wizard is running - it checks anyway... */
+    if (!system ("ps ax | grep -v grep | grep -q piwiz")) return FALSE;
+
     if (net_available ()) check_for_updates (up);
     else
     {
