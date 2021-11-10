@@ -1,4 +1,4 @@
-# English translations for lxplug_updater package.
+# Italian translations for lxplug_updater package.
 # Copyright (C) 2021 Raspberry Pi Ltd
 # This file is distributed under the same license as the lxplug_updater package.
 # Emanuele Goldoni <emanuele.goldoni@gmail.com>, 2021.
