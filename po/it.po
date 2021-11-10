@@ -1,0 +1,145 @@
+# English translations for lxplug_updater package.
+# Copyright (C) 2021 Raspberry Pi Ltd
+# This file is distributed under the same license as the lxplug_updater package.
+# Emanuele Goldoni <emanuele.goldoni@gmail.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lxplug-updater\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-11-09 19:25+0100\n"
+"PO-Revision-Date: 2021-11-10 12:12+0100\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.4.1\n"
+"Last-Translator: Emanuele Goldoni <emanuele.goldoni@gmail.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: it\n"
+
+#: ../plugins/updater/updater.c:209
+msgid ""
+"Updates are available\n"
+"Click the update icon to install"
+msgstr ""
+"Ci sono aggiornamenti disponibili\n"
+"Fare clic sull'icona degli aggiornamenti per installarli"
+
+#: ../plugins/updater/updater.c:230
+msgid "No network connection - cannot install updates."
+msgstr "Nessuna connessione di rete: impossibile installare gli aggiornamenti."
+
+#: ../plugins/updater/updater.c:236
+msgid "Clock not synchronised - cannot install updates. Try again in a few minutes."
+msgstr "Orologio non sincronizzato: impossibile installare gli aggiornamenti. Provare nuovamente tra alcuni minuti."
+
+#: ../plugins/updater/updater.c:331
+msgid "Show Updates..."
+msgstr "Mostra gli aggiornamenti..."
+
+#: ../plugins/updater/updater.c:335
+msgid "Install Updates"
+msgstr "Installa gli aggiornamenti"
+
+#: ../plugins/updater/updater.c:473
+msgid "Updates are available - click to install"
+msgstr "Ci sono aggiornamenti disponibili - fare clic per installare"
+
+#: ../plugins/updater/updater.c:553 ../plugins/updater/updater.c:584
+msgid "Updater"
+msgstr "Aggiornamenti"
+
+#: ../plugins/updater/updater.c:555
+msgid "Hours between checks for updates"
+msgstr "Intervallo (in ore) tra i controlli per gli aggiornamenti"
+
+#: ../plugins/updater/updater.c:585
+msgid "Checks for updates"
+msgstr "Verifica la disponibilità di aggiornamenti"
+
+#: ../src/installer.c:101
+msgid "Reboot"
+msgstr "Riavvia ora"
+
+#: ../src/installer.c:102
+msgid "Later"
+msgstr "Più tardi"
+
+#: ../src/installer.c:154 ../src/installer.c:163
+#, c-format
+msgid "Error %s - %s"
+msgstr "Errore %s: %s"
+
+#: ../src/installer.c:183 ../src/installer.c:215
+msgid "Updating package data - please wait..."
+msgstr "Aggiornamento dei dati del pacchetto..."
+
+#: ../src/installer.c:189
+msgid "Checking package details - please wait..."
+msgstr "Verifica dei dettagli del pacchetto..."
+
+#: ../src/installer.c:196
+#, c-format
+msgid "%s packages - please wait..."
+msgstr "%s dei pacchetti..."
+
+#: ../src/installer.c:196
+msgid "Installing"
+msgstr "Installazione"
+
+#: ../src/installer.c:196
+msgid "Downloading"
+msgstr "Scaricamento"
+
+#: ../src/installer.c:225
+msgid "updating cache"
+msgstr "aggiornando la cache"
+
+#: ../src/installer.c:227
+msgid "Comparing versions - please wait..."
+msgstr "Confronto tra le versioni..."
+
+#: ../src/installer.c:243
+msgid "comparing versions"
+msgstr "confrontando le versioni"
+
+#: ../src/installer.c:258
+msgid "Installing updates - please wait..."
+msgstr "Installazione degli aggiornamenti..."
+
+#: ../src/installer.c:266 ../src/installer.c:281
+msgid "System is up to date"
+msgstr "Il sistema è aggiornato"
+
+#: ../src/installer.c:277
+msgid "installing packages"
+msgstr "installando i pacchetti"
+
+#: ../src/installer.c:286
+msgid ""
+"System is up to date.\n"
+"A reboot is required to complete the install. Reboot now or later?"
+msgstr ""
+"Il sistema è aggiornato.\n"
+"E' richiesto un riavvio per completare l'installazione. Riavviare ora o più tardi?"
+
+#: ../data/pwdlpu.sh:6
+msgid "Password Required"
+msgstr "Password necessaria"
+
+#: ../data/lxplug-updater.ui.h:1
+msgid "Available Updates"
+msgstr "Aggiornamenti disponibili"
+
+#: ../data/lxplug-updater.ui.h:2
+msgid "Close"
+msgstr "Chiudi"
+
+#: ../data/lxplug-updater.ui.h:3
+msgid "Install"
+msgstr "Installa"
+
+#: ../data/lxplug-updater.ui.h:4
+msgid "The following packages can be updated :"
+msgstr "I seguenti pacchetti possono essere aggiornati:"
