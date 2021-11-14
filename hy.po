@@ -1,0 +1,146 @@
+# English translations for lxplug_updater package.
+# Copyright (C) 2021 Raspberry Pi Ltd
+# This file is distributed under the same license as the lxplug_updater package.
+# Simon Long <simon@raspberrypi.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lxplug_updater 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-09-17 12:59+0100\n"
+"PO-Revision-Date: 2021-09-12 14:15+0100\n"
+"Last-Translator: Avag Sayan <info@armath.am\n"
+"Language-Team: Armenian (hy) <(nothing)>\n"
+"Language: hy\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../plugins/updater/updater.c:209
+msgid ""
+"Updates are available\n"
+"Click the update icon to install"
+msgstr ""
+"Հասանելի է թարմացումներ\n"
+"Տեղադրելու համար սեղմեք թարմացման պատկերի վրա"
+
+#: ../plugins/updater/updater.c:230
+msgid "No network connection - cannot install updates."
+msgstr "Ցանցը առկա չէ - հնարավոր չէ տեղադրել թարմացումները։"
+
+#: ../plugins/updater/updater.c:236
+msgid ""
+"Clock not synchronised - cannot install updates. Try again in a few minutes."
+msgstr ""
+"Ժամանակը համաժամեցված չէ - հնարավոր չէ տեղադրել թարմացումները։ Մի քանի րոպե հետո նորից փորձեք։"
+
+#: ../plugins/updater/updater.c:331
+msgid "Show Updates..."
+msgstr "Ցուցադրել թարմացումները..."
+
+#: ../plugins/updater/updater.c:335
+msgid "Install Updates"
+msgstr "Տեղադրել թարմացումները"
+
+#: ../plugins/updater/updater.c:470
+msgid "Updates are available - click to install"
+msgstr "Թարմացումները հասանելի են - սեղմեք տեղադրելու համար"
+
+#: ../plugins/updater/updater.c:550 ../plugins/updater/updater.c:581
+msgid "Updater"
+msgstr "Թարմացումների գործիք"
+
+#: ../plugins/updater/updater.c:552
+msgid "Hours between checks for updates"
+msgstr "Թարմացումների ստուգումների միջև ընկած ժամամանակ"
+
+#: ../plugins/updater/updater.c:582
+msgid "Checks for updates"
+msgstr "Ստուգել թարմացումները"
+
+#: ../src/installer.c:101
+msgid "Reboot"
+msgstr "Վերագործարկել"
+
+#: ../src/installer.c:102
+msgid "Later"
+msgstr "Ավելի ուշ"
+
+#: ../src/installer.c:154 ../src/installer.c:163
+#, c-format
+msgid "Error %s - %s"
+msgstr "Սխալ %s - %s"
+
+#: ../src/installer.c:183 ../src/installer.c:215
+msgid "Updating package data - please wait..."
+msgstr "Փաթեթների տվյալների թարմացում - խնդրում ենք սպասել..."
+
+#: ../src/installer.c:189
+msgid "Checking package details - please wait..."
+msgstr "Փաթեթների դետալների թարմացում - խնդրում ենք սպասել..."
+
+#: ../src/installer.c:196
+#, c-format
+msgid "%s packages - please wait..."
+msgstr "%s փաթեթներ - խնդրում ենք սպասել..."
+
+#: ../src/installer.c:196
+msgid "Installing"
+msgstr "Տեղադրում"
+
+#: ../src/installer.c:196
+msgid "Downloading"
+msgstr "Ներբեռնում"
+
+#: ../src/installer.c:225
+msgid "updating cache"
+msgstr "քեշերի թարմացում"
+
+#: ../src/installer.c:227
+msgid "Comparing versions - please wait..."
+msgstr "Տարբերակների համեմատում - խնդրում ենք սպասել..."
+
+#: ../src/installer.c:243
+msgid "comparing versions"
+msgstr "տարբերակների համեմատում"
+
+#: ../src/installer.c:258
+msgid "Installing updates - please wait..."
+msgstr "Տեղադրումների թարմացում - խնդրում ենք սպասել..."
+
+#: ../src/installer.c:266 ../src/installer.c:281
+msgid "System is up to date"
+msgstr "Համակարգը թարմ է"
+
+#: ../src/installer.c:277
+msgid "installing packages"
+msgstr "Փաթեթների տեղադրում"
+
+#: ../src/installer.c:286
+msgid ""
+"System is up to date.\n"
+"A reboot is required to complete the install. Reboot now or later?"
+msgstr ""
+"Համակարգը թարմ է.\n"
+"Տեղադրումներն ավարտելու համար անհրաժեշտ է վերագործարկում։ Վերագործարկել հիմա՞, թե հետո"
+
+#: ../data/pwdlpu.sh:6
+msgid "Password Required"
+msgstr "Պահանջում է գաղտնաբառ"
+
+#: ../data/lxplug-updater.ui.h:1
+msgid "Available Updates"
+msgstr "Հասանելի թարմացումներ"
+
+#: ../data/lxplug-updater.ui.h:2
+msgid "Close"
+msgstr "Փակել"
+
+#: ../data/lxplug-updater.ui.h:3
+msgid "Install"
+msgstr "Տեղադրել"
+
+#: ../data/lxplug-updater.ui.h:4
+msgid "The following packages can be updated :"
+msgstr "Հետևյալ փաթեթները կարող են թարմանալ՝ "
