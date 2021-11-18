@@ -1,3 +1,9 @@
+lxplug-updater (0.6) bullseye; urgency=medium
+
+  * Add Italian and Armenian translations
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 18 Nov 2021 11:18:54 +0000
+
 lxplug-updater (0.5) bullseye; urgency=medium
 
   * Suppress initial check for updates if wizard is running
