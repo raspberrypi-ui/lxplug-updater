@@ -93,8 +93,8 @@ static void message (char *msg, int prog)
     gtk_widget_set_visible (msg_btn, prog <= -3);
     gtk_widget_set_visible (msg_btn2, prog == -4);
     gtk_widget_set_visible (msg_pb, prog > -2);
-    if (prog != -4) g_signal_connect (msg_btn, "clicked", G_CALLBACK (quit), NULL);
-    else
+    if (prog == -3) g_signal_connect (msg_btn, "clicked", G_CALLBACK (quit), NULL);
+    else if (prog == -4)
     {
         g_signal_connect (msg_btn2, "clicked", G_CALLBACK (quit), NULL);
         g_signal_connect (msg_btn, "clicked", G_CALLBACK (reboot), NULL);
