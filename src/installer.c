@@ -51,7 +51,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_pbv, *msg_btn2;
 
-gboolean success = FALSE;
+gboolean installed = FALSE;
 
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
@@ -113,7 +113,7 @@ static void message (char *msg, int prog)
 
 static gboolean quit (GtkButton *button, gpointer data)
 {
-    if (success) system ("lxpanelctl command updater check");
+    if (installed) system ("lxpanelctl command updater check");
     if (msg_dlg)
     {
         gtk_widget_destroy (GTK_WIDGET (msg_dlg));
@@ -265,7 +265,6 @@ static void start_install (PkTask *task, GAsyncResult *res, gpointer data)
     {
         message (_("System is up to date"), -3);
         g_timeout_add_seconds (2, close_end, NULL);
-        success = TRUE;
     }
 
     if (sack) g_object_unref (sack);
@@ -274,13 +273,12 @@ static void start_install (PkTask *task, GAsyncResult *res, gpointer data)
 
 static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
 {
+    installed = TRUE;
     if (!error_handler (task, res, _("installing packages"))) return;
 
     if (access ("/run/reboot-required", F_OK))
     {
         message (_("System is up to date"), -3);
-        success = TRUE;
-
         g_timeout_add_seconds (2, close_end, NULL);
     }
     else message (_("System is up to date.\nA reboot is required to complete the install. Reboot now or later?"), -4);
@@ -288,7 +286,7 @@ static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
 
 static gboolean close_end (gpointer data)
 {
-    if (success) system ("lxpanelctl command updater check");
+    system ("lxpanelctl command updater check");
     if (msg_dlg)
     {
         gtk_widget_destroy (GTK_WIDGET (msg_dlg));
