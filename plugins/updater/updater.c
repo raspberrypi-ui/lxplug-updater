@@ -201,7 +201,7 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
     }
 
     up->n_updates = pk_package_sack_get_size (fsack);
-    g_strfreev (up->ids);
+    if (up->ids != NULL) g_strfreev (up->ids);
     if (up->n_updates > 0)
     {
         DEBUG ("Check complete - %d updates available", up->n_updates);
@@ -211,6 +211,7 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
     else
     {
         DEBUG ("Check complete - no updates available");
+        up->ids = NULL;
     }
     update_icon (up, FALSE);
 
@@ -490,6 +491,7 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
 
     /* Hide the widget and start the check for updates */
     up->n_updates = 0;
+    up->ids = NULL;
     gtk_widget_show_all (up->plugin);
     g_idle_add (init_check, up);
 
