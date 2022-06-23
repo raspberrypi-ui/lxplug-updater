@@ -327,13 +327,12 @@ static void show_menu (UpdaterPlugin *up)
     hide_menu (up);
 
     up->menu = gtk_menu_new ();
-    gtk_menu_set_reserve_toggle_size (GTK_MENU (up->menu), FALSE);
 
-    item = lxpanel_plugin_new_menu_item (up->panel, _("Show Updates..."), 0, NULL);
+    item = gtk_menu_item_new_with_label (_("Show Updates..."));
     g_signal_connect (G_OBJECT (item), "activate", G_CALLBACK (show_updates), up);
     gtk_menu_shell_append (GTK_MENU_SHELL (up->menu), item);
 
-    item = lxpanel_plugin_new_menu_item (up->panel, _("Install Updates"), 0, NULL);
+    item = gtk_menu_item_new_with_label (_("Install Updates"));
     g_signal_connect (G_OBJECT (item), "activate", G_CALLBACK (install_updates), up);
     gtk_menu_shell_append (GTK_MENU_SHELL (up->menu), item);
 

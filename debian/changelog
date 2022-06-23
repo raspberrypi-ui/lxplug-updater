@@ -1,3 +1,9 @@
+lxplug-updater (0.10) bullseye; urgency=medium
+
+  * Use standard menu items
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 23 Jun 2022 16:59:45 +0100
+
 lxplug-updater (0.9) bullseye; urgency=medium
 
   * Fix for possible freeing of unallocated memory
