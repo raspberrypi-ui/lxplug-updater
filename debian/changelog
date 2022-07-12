@@ -1,3 +1,9 @@
+lxplug-updater (0.11) bullseye; urgency=medium
+
+  * Fix strtok weirdness on x86 image
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 12 Jul 2022 09:03:55 +0100
+
 lxplug-updater (0.10) bullseye; urgency=medium
 
   * Use standard menu items

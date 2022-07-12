@@ -262,7 +262,7 @@ static void show_updates (GtkWidget *widget, gpointer user_data)
     GtkWidget *update_list;
     GtkCellRenderer *trend = gtk_cell_renderer_text_new ();
     int count;
-    char buffer[1024];
+    char buffer[1024], *ptr, *ver;
 
     builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/ui/lxplug-updater.ui");
     up->update_dlg = (GtkWidget *) gtk_builder_get_object (builder, "update_dlg");
@@ -275,7 +275,14 @@ static void show_updates (GtkWidget *widget, gpointer user_data)
     while (count < up->n_updates)
     {
         g_strlcpy (buffer, up->ids[count], sizeof (buffer));
-        gtk_list_store_insert_with_values (ls, NULL, count, 0, strtok (buffer, ";"), 1, strtok (NULL, ";"), -1);
+        ptr = buffer;
+        while (*ptr != ';') ptr++;
+        *ptr = 0;
+        ptr++;
+        ver = ptr;
+        while (*ptr != ';') ptr++;
+        *ptr = 0;
+        gtk_list_store_insert_with_values (ls, NULL, count, 0, buffer, 1, ver, -1);
         count++;
     }
 
