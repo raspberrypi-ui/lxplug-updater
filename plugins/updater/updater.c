@@ -264,6 +264,8 @@ static void show_updates (GtkWidget *widget, gpointer user_data)
     int count;
     char buffer[1024], *ptr, *ver;
 
+    textdomain (GETTEXT_PACKAGE);
+
     builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/ui/lxplug-updater.ui");
     up->update_dlg = (GtkWidget *) gtk_builder_get_object (builder, "update_dlg");
     g_signal_connect (gtk_builder_get_object (builder, "btn_install"), "clicked", G_CALLBACK (handle_close_and_install), up);
@@ -472,7 +474,6 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
     setlocale (LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
     bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
-    textdomain (GETTEXT_PACKAGE);
 #endif
 
     up->tray_icon = gtk_image_new ();
@@ -516,9 +517,6 @@ static gboolean updater_button_press_event (GtkWidget *widget, GdkEventButton *e
 {
     UpdaterPlugin *up = lxpanel_plugin_get_data (widget);
 
-#ifdef ENABLE_NLS
-    textdomain (GETTEXT_PACKAGE);
-#endif
     /* Show or hide the popup menu on left-click */
     if (event->button == 1)
     {
@@ -555,9 +553,7 @@ static gboolean updater_control_msg (GtkWidget *plugin, const char *cmd)
 static GtkWidget *updater_configure (LXPanel *panel, GtkWidget *p)
 {
     UpdaterPlugin *up = lxpanel_plugin_get_data (p);
-#ifdef ENABLE_NLS
-    textdomain (GETTEXT_PACKAGE);
-#endif
+
     return lxpanel_generic_config_dlg(_("Updater"), panel,
         updater_apply_configuration, p,
         _("Hours between checks for updates"), &up->interval, CONF_TYPE_INT,
