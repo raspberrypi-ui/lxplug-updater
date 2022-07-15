@@ -369,6 +369,8 @@ static void message (char *msg, int prog)
     GtkBuilder *builder;
     GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn;
 
+    textdomain (GETTEXT_PACKAGE);
+
     builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/ui/lxpanel-modal.ui");
     msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "modal");
     msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "modal_msg");
