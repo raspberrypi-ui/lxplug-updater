@@ -48,7 +48,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #define SECS_PER_HOUR 3600L
-#define UPDATE_ICON "update-avail"
 
 /*----------------------------------------------------------------------------*/
 /* Plug-in global data                                                        */
@@ -470,7 +469,6 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
 {
     /* Allocate and initialize plugin context */
     UpdaterPlugin *up = g_new0 (UpdaterPlugin, 1);
-    int val;
 
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
@@ -478,31 +476,25 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
     bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 #endif
 
-    up->tray_icon = gtk_image_new ();
-    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, UPDATE_ICON);
-    gtk_widget_set_tooltip_text (up->tray_icon, _("Updates are available - click to install"));
-    gtk_widget_set_visible (up->tray_icon, TRUE);
-
-    /* Allocate top level widget and set into Plugin widget pointer. */
+    /* Allocate top level widget and set into plugin widget pointer. */
     up->panel = panel;
-    up->plugin = gtk_button_new ();
-    gtk_button_set_relief (GTK_BUTTON (up->plugin), GTK_RELIEF_NONE);
-    g_signal_connect (up->plugin, "button-press-event", G_CALLBACK (updater_button_press_event), NULL);
     up->settings = settings;
+    up->plugin = gtk_button_new ();
     lxpanel_plugin_set_data (up->plugin, up, updater_destructor);
-    gtk_widget_add_events (up->plugin, GDK_BUTTON_PRESS_MASK);
 
     /* Allocate icon as a child of top level */
+    up->tray_icon = gtk_image_new ();
     gtk_container_add (GTK_CONTAINER (up->plugin), up->tray_icon);
+    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "update-avail");
+    gtk_widget_set_tooltip_text (up->tray_icon, _("Updates are available - click to install"));
 
-    /* Initialise data structures */
+    /* Set up button */
+    gtk_button_set_relief (GTK_BUTTON (up->plugin), GTK_RELIEF_NONE);
+
+    /* Set up variables */
     up->menu = NULL;
-
-    /* Hide the widget and start the check for updates */
     up->n_updates = 0;
     up->ids = NULL;
-    gtk_widget_show_all (up->plugin);
-    g_idle_add (init_check, up);
 
     /* Set timer for update checks */
     if (!config_setting_lookup_int (settings, "Interval", &up->interval)) up->interval = 24;
@@ -511,6 +503,11 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
     else
         up->timer = 0;
 
+    /* Start the initial check for updates */
+    g_idle_add (init_check, up);
+
+    /* Show the widget and return. */
+    gtk_widget_show_all (up->plugin);
     return up->plugin;
 }
 
@@ -533,7 +530,7 @@ static void updater_configuration_changed (LXPanel *panel, GtkWidget *p)
 {
     UpdaterPlugin *up = lxpanel_plugin_get_data (p);
 
-    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, UPDATE_ICON);
+    lxpanel_plugin_set_taskbar_icon (panel, up->tray_icon, "update-avail");
 }
 
 /* Handler for control message from panel */
@@ -583,7 +580,7 @@ static void updater_destructor (gpointer user_data)
     g_free (up);
 }
 
-FM_DEFINE_MODULE(lxpanel_gtk, updater)
+FM_DEFINE_MODULE (lxpanel_gtk, updater)
 
 /* Plugin descriptor. */
 LXPanelPluginInit fm_module_init_lxpanel_gtk = {
