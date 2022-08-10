@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef DEBUG_ON
 #define DEBUG(fmt,args...) g_message("up: " fmt,##args)
 #else
-#define DEBUG
+#define DEBUG(fmt,args...)
 #endif
 
 #define SECS_PER_HOUR 3600L
