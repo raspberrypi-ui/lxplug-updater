@@ -154,7 +154,7 @@ static gpointer refresh_update_cache (gpointer data)
 static void refresh_cache_done (PkTask *task, GAsyncResult *res, gpointer data)
 {
     GError *error = NULL;
-    PkResults *results = pk_task_generic_finish (task, res, &error);
+    pk_task_generic_finish (task, res, &error);
 
     if (error != NULL)
     {
@@ -177,7 +177,6 @@ static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) data;
     PkPackageSack *sack = NULL, *fsack;
-    int n_up;
 
     GError *error = NULL;
     PkResults *results = pk_task_generic_finish (task, res, &error);
@@ -319,7 +318,7 @@ static void handle_close_and_install (GtkButton *button, gpointer user_data)
 static gint delete_update_dialog (GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) user_data;
-    handle_close_update_dialog (NULL, user_data);
+    handle_close_update_dialog (NULL, up);
     return TRUE;
 }
 
@@ -569,6 +568,7 @@ static gboolean updater_apply_configuration (gpointer user_data)
         up->timer = g_timeout_add_seconds (up->interval * SECS_PER_HOUR, periodic_check, up);
     else
         up->timer = 0;
+    return FALSE;
 }
 
 /* Plugin destructor. */
