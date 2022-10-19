@@ -51,7 +51,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_pbv, *msg_btn2;
 
-gboolean installed = FALSE;
+gboolean success = TRUE;
 
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
@@ -113,7 +113,7 @@ static void message (char *msg, int prog)
 
 static gboolean quit (GtkButton *button, gpointer data)
 {
-    if (installed) system ("lxpanelctl command updater check");
+    if (success) system ("lxpanelctl command updater check");
     if (msg_dlg)
     {
         gtk_widget_destroy (GTK_WIDGET (msg_dlg));
@@ -151,6 +151,7 @@ static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
     results = pk_task_generic_finish (task, res, &error);
     if (error != NULL)
     {
+        success = FALSE;
         buf = g_strdup_printf (_("Error %s - %s"), desc, error->message);
         message (buf, -3);
         g_free (buf);
@@ -160,6 +161,7 @@ static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
     pkerror = pk_results_get_error_code (results);
     if (pkerror != NULL)
     {
+        success = FALSE;
         buf = g_strdup_printf (_("Error %s - %s"), desc, pk_error_get_details (pkerror));
         message (buf, -3);
         g_free (buf);
@@ -273,7 +275,6 @@ static void start_install (PkTask *task, GAsyncResult *res, gpointer data)
 
 static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
 {
-    installed = TRUE;
     if (!error_handler (task, res, _("installing packages"))) return;
 
     if (access ("/run/reboot-required", F_OK))
