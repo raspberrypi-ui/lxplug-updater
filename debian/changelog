@@ -1,3 +1,9 @@
+lxplug-updater (0.14) bullseye; urgency=medium
+
+  * Add Korean translations
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 18 May 2023 10:49:50 +0100
+
 lxplug-updater (0.13) bullseye; urgency=medium
 
   * Always hide icon and re-check unless there is an error from the installer
