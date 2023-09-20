@@ -1,3 +1,9 @@
+lxplug-updater (0.16) bookworm; urgency=medium
+
+  * Disable menu while dialog on screen
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 20 Sep 2023 13:59:34 +0100
+
 lxplug-updater (0.15) bookworm; urgency=medium
 
   * Use polkit authentication for installer rather than sudo
