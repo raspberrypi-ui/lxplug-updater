@@ -335,12 +335,12 @@ static void show_menu (UpdaterPlugin *up)
 
     item = gtk_menu_item_new_with_label (_("Show Updates..."));
     g_signal_connect (G_OBJECT (item), "activate", G_CALLBACK (show_updates), up);
-    if (gtk_widget_is_visible (up->update_dlg)) gtk_widget_set_sensitive (item, FALSE);
+    if (up->update_dlg && gtk_widget_is_visible (up->update_dlg)) gtk_widget_set_sensitive (item, FALSE);
     gtk_menu_shell_append (GTK_MENU_SHELL (up->menu), item);
 
     item = gtk_menu_item_new_with_label (_("Install Updates"));
     g_signal_connect (G_OBJECT (item), "activate", G_CALLBACK (install_updates), up);
-    if (gtk_widget_is_visible (up->update_dlg)) gtk_widget_set_sensitive (item, FALSE);
+    if (up->update_dlg && gtk_widget_is_visible (up->update_dlg)) gtk_widget_set_sensitive (item, FALSE);
     gtk_menu_shell_append (GTK_MENU_SHELL (up->menu), item);
 
     gtk_widget_show_all (up->menu);
@@ -492,6 +492,7 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
 
     /* Set up variables */
     up->menu = NULL;
+    up->update_dlg = NULL;
     up->n_updates = 0;
     up->ids = NULL;
 

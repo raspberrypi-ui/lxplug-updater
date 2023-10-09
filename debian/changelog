@@ -1,3 +1,9 @@
+lxplug-updater (0.17) bookworm; urgency=medium
+
+  * Fix some minor warnings
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 09 Oct 2023 08:20:05 +0100
+
 lxplug-updater (0.16) bookworm; urgency=medium
 
   * Disable menu while dialog on screen
