@@ -1,3 +1,9 @@
+lxplug-updater (0.18) bookworm; urgency=medium
+
+  * Modify installer to handle packages being uninstalled during an update
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 10 Nov 2023 13:37:57 +0000
+
 lxplug-updater (0.17) bookworm; urgency=medium
 
   * Fix some minor warnings

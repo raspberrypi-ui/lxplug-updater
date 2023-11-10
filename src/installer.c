@@ -49,7 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Controls */
 
-static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_pbv, *msg_btn2;
+static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_btn2;
 
 gboolean success = TRUE;
 
@@ -61,7 +61,7 @@ static void message (char *msg, int prog);
 static gboolean quit (GtkButton *button, gpointer data);
 static gboolean reboot (GtkButton *button, gpointer data);
 static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
-static void progress (PkProgress *progress, PkProgressType *type, gpointer data);
+static void progress (PkProgress *progress, PkProgressType type, gpointer data);
 static gboolean refresh_cache (gpointer data);
 static void compare_versions (PkTask *task, GAsyncResult *res, gpointer data);
 static void start_install (PkTask *task, GAsyncResult *res, gpointer data);
@@ -171,9 +171,9 @@ static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
     return results;
 }
 
-static void progress (PkProgress *progress, PkProgressType *type, gpointer data)
+static void progress (PkProgress *progress, PkProgressType type, gpointer data)
 {
-    char *buf, *name;
+    char *buf;
     int role = pk_progress_get_role (progress);
     int status = pk_progress_get_status (progress);
 
@@ -233,8 +233,27 @@ static void compare_versions (PkTask *task, GAsyncResult *res, gpointer data)
 
 static gboolean filter_fn (PkPackage *package, gpointer user_data)
 {
+    PkInfoEnum info = pk_package_get_info (package);
+	switch (info)
+    {
+        case PK_INFO_ENUM_LOW:
+        case PK_INFO_ENUM_NORMAL:
+        case PK_INFO_ENUM_IMPORTANT:
+        case PK_INFO_ENUM_SECURITY:
+        case PK_INFO_ENUM_BUGFIX:
+        case PK_INFO_ENUM_ENHANCEMENT:
+        case PK_INFO_ENUM_BLOCKED:      return TRUE;
+                                        break;
+
+        default:                        return FALSE;
+                                        break;
+    }
+}
+
+static gboolean filter_fn_x86 (PkPackage *package, gpointer user_data)
+{
     if (strstr (pk_package_get_arch (package), "amd64")) return FALSE;
-    return TRUE;
+    return filter_fn (package, NULL);
 }
 
 static void start_install (PkTask *task, GAsyncResult *res, gpointer data)
@@ -245,15 +264,11 @@ static void start_install (PkTask *task, GAsyncResult *res, gpointer data)
     PkResults *results = error_handler (task, res, _("comparing versions"));
     if (!results) return;
 
+    sack = pk_results_get_package_sack (results);
     if (system ("raspi-config nonint is_pi"))
-    {
-        sack = pk_results_get_package_sack (results);
-        fsack = pk_package_sack_filter (sack, filter_fn, data);
-    }
+        fsack = pk_package_sack_filter (sack, filter_fn_x86, data);
     else
-    {
-        fsack = pk_results_get_package_sack (results);
-    }
+        fsack = pk_package_sack_filter (sack, filter_fn, data);
 
     if (pk_package_sack_get_size (fsack) > 0)
     {
@@ -305,9 +320,6 @@ static gboolean close_end (gpointer data)
 
 int main (int argc, char *argv[])
 {
-    char *buf;
-    int res;
-
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
