@@ -1,2 +1,0 @@
-#!/usr/bin/dh-exec
-data/10-lxpanel-installer.rules => /etc/polkit-1/rules.d/10-lxpanel-installer.rules

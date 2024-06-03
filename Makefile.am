@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS= -I m4
 
-SUBDIRS = plugins po data src
+SUBDIRS = plugins po data
 
 EXTRA_DIST = \
         autogen.sh
