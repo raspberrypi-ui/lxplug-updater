@@ -1,0 +1,146 @@
+# Simplified Chinese translations for lxplug_updater package.
+# Copyright (C) 2021 Raspberry Pi Ltd
+# This file is distributed under the same license as the lxplug_updater package.
+# ykla <yklaxds@gmail>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lxplug_updater 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-09-17 12:59+0100\n"
+"PO-Revision-Date: 2024-07-14 17:47+0800\n"
+"Last-Translator: ykla <yklaxds@gmail.com>\n"
+"Language-Team: ykla <yklaxds@gmail.com>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.4.4\n"
+
+#: ../plugins/updater/updater.c:209
+msgid ""
+"Updates are available\n"
+"Click the update icon to install"
+msgstr ""
+"有更新可用\n"
+"点击更新图标安装"
+
+#: ../plugins/updater/updater.c:230
+msgid "No network connection - cannot install updates."
+msgstr "无网络连接——无法安装更新。"
+
+#: ../plugins/updater/updater.c:236
+msgid ""
+"Clock not synchronised - cannot install updates. Try again in a few minutes."
+msgstr "时钟未同步——无法安装更新。请稍后再试。"
+
+#: ../plugins/updater/updater.c:331
+msgid "Show Updates..."
+msgstr "显示更新……"
+
+#: ../plugins/updater/updater.c:335
+msgid "Install Updates"
+msgstr "安装更新"
+
+#: ../plugins/updater/updater.c:470
+msgid "Updates are available - click to install"
+msgstr "有更新可用——点击安装"
+
+#: ../plugins/updater/updater.c:550 ../plugins/updater/updater.c:581
+msgid "Updater"
+msgstr "更新器"
+
+#: ../plugins/updater/updater.c:552
+msgid "Hours between checks for updates"
+msgstr "检查更新的时间间隔"
+
+#: ../plugins/updater/updater.c:582
+msgid "Checks for updates"
+msgstr "检查更新"
+
+#: ../src/installer.c:101
+msgid "Reboot"
+msgstr "重启"
+
+#: ../src/installer.c:102
+msgid "Later"
+msgstr "稍后"
+
+#: ../src/installer.c:154 ../src/installer.c:163
+#, c-format
+msgid "Error %s - %s"
+msgstr "错误 %s - %s"
+
+#: ../src/installer.c:183 ../src/installer.c:215
+msgid "Updating package data - please wait..."
+msgstr "正在更新软件包数据——请稍后……"
+
+#: ../src/installer.c:189
+msgid "Checking package details - please wait..."
+msgstr "正在检查软件包详情——请稍后……"
+
+#: ../src/installer.c:196
+#, c-format
+msgid "%s packages - please wait..."
+msgstr "%s 软件包——请稍后……"
+
+#: ../src/installer.c:196
+msgid "Installing"
+msgstr "正在安装"
+
+#: ../src/installer.c:196
+msgid "Downloading"
+msgstr "正在下载"
+
+#: ../src/installer.c:225
+msgid "updating cache"
+msgstr "正在更新缓存"
+
+#: ../src/installer.c:227
+msgid "Comparing versions - please wait..."
+msgstr "正在比对版本——请稍后……"
+
+#: ../src/installer.c:243
+msgid "comparing versions"
+msgstr "比对版本"
+
+#: ../src/installer.c:258
+msgid "Installing updates - please wait..."
+msgstr "正在安装更新——请稍后……"
+
+#: ../src/installer.c:266 ../src/installer.c:281
+msgid "System is up to date"
+msgstr "系统已是最新"
+
+#: ../src/installer.c:277
+msgid "installing packages"
+msgstr "正在安装软件包"
+
+#: ../src/installer.c:286
+msgid ""
+"System is up to date.\n"
+"A reboot is required to complete the install. Reboot now or later?"
+msgstr ""
+"系统已经是最新版本。\n"
+"完成安装需重启。是现在重启还是稍后重启？"
+
+#: ../data/pwdlpu.sh:6
+msgid "Password Required"
+msgstr "需要密码"
+
+#: ../data/lxplug-updater.ui.h:1
+msgid "Available Updates"
+msgstr "无更新可用"
+
+#: ../data/lxplug-updater.ui.h:2
+msgid "Close"
+msgstr "退出"
+
+#: ../data/lxplug-updater.ui.h:3
+msgid "Install"
+msgstr "安装"
+
+#: ../data/lxplug-updater.ui.h:4
+msgid "The following packages can be updated :"
+msgstr "将更新以下软件包："
