@@ -1,3 +1,9 @@
+lxplug-updater (0.20) bookworm; urgency=medium
+
+  * Fix menu position
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 22 Nov 2024 14:39:02 +0000
+
 lxplug-updater (0.19) bookworm; urgency=medium
 
   * Tidy PackageKit code in installer; do not fail silently when clock not synced
