@@ -1,5 +1,5 @@
-/*
-Copyright (c) 2021 Raspberry Pi (Trading) Ltd.
+/*============================================================================
+Copyright (c) 2021-2025 Raspberry Pi Holdings Ltd.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+============================================================================*/
 
 #include <errno.h>
 #include <locale.h>
@@ -41,6 +41,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define I_KNOW_THE_PACKAGEKIT_GLIB2_API_IS_SUBJECT_TO_CHANGE
 #include <packagekit-glib2/packagekit.h>
+
+/*----------------------------------------------------------------------------*/
+/* Typedefs and macros */
+/*----------------------------------------------------------------------------*/
 
 #define DEBUG_ON
 #ifdef DEBUG_ON
@@ -78,19 +82,6 @@ static void update_icon (UpdaterPlugin *up, gboolean hide);
 static gboolean init_check (gpointer data);
 static gboolean net_check (gpointer data);
 static gboolean periodic_check (gpointer data);
-#ifdef LXPLUG
-static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *settings);
-static gboolean updater_button_press_event (GtkWidget *widget, GdkEventButton *event, LXPanel *panel);
-static void updater_configuration_changed (LXPanel *panel, GtkWidget *p);
-static gboolean updater_control_msg (GtkWidget *plugin, const char *cmd);
-static GtkWidget *updater_configure (LXPanel *panel, GtkWidget *p);
-static gboolean updater_apply_configuration (gpointer user_data);
-static void updater_destructor (gpointer user_data);
-#else
-static void updater_button_press_event (GtkWidget *widget, UpdaterPlugin *up);
-static void updater_gesture_pressed (GtkGestureLongPress *, gdouble x, gdouble y, UpdaterPlugin *up);
-static void updater_gesture_end (GtkGestureLongPress *, GdkEventSequence *, UpdaterPlugin *up);
-#endif
 
 /*----------------------------------------------------------------------------*/
 /* Utility functions                                                          */
@@ -404,31 +395,76 @@ static gboolean periodic_check (gpointer data)
     return TRUE;
 }
 
-
 /*----------------------------------------------------------------------------*/
-/* Plugin functions                                                           */
+/* wf-panel plugin functions                                                  */
 /*----------------------------------------------------------------------------*/
 
-/* Plugin constructor */
+/* Handler for button click */
 #ifdef LXPLUG
-static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *settings)
+static gboolean updater_button_press_event (GtkWidget *widget, GdkEventButton *event, LXPanel *)
 {
-    /* Allocate and initialize plugin context */
-    UpdaterPlugin *up = g_new0 (UpdaterPlugin, 1);
+    UpdaterPlugin *up = lxpanel_plugin_get_data (widget);
 
-    setlocale (LC_ALL, "");
-    bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
-    bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
-
-    /* Allocate top level widget and set into plugin widget pointer. */
-    up->panel = panel;
-    up->settings = settings;
-    up->plugin = gtk_button_new ();
-    lxpanel_plugin_set_data (up->plugin, up, updater_destructor);
+    /* Show or hide the popup menu on left-click */
+    if (event->button == 1)
+    {
+        show_menu (up);
+        return TRUE;
+    }
+    else return FALSE;
+}
 #else
+static void updater_button_press_event (GtkWidget *, UpdaterPlugin *up)
+{
+    if (pressed != PRESS_LONG) show_menu (up);
+    pressed = PRESS_NONE;
+}
+
+/* Handler for long press gesture */
+static void updater_gesture_pressed (GtkGestureLongPress *, gdouble x, gdouble y, UpdaterPlugin *)
+{
+    pressed = PRESS_LONG;
+    press_x = x;
+    press_y = y;
+}
+
+static void updater_gesture_end (GtkGestureLongPress *, GdkEventSequence *, UpdaterPlugin *up)
+{
+    if (pressed == PRESS_LONG) pass_right_click (up->plugin, press_x, press_y);
+}
+#endif
+
+/* Handler for system config changed message from panel */
+void updater_update_display (UpdaterPlugin *up)
+{
+    wrap_set_taskbar_icon (up, up->tray_icon, "update-avail");
+}
+
+/* Handler for control message */
+gboolean updater_control_msg (UpdaterPlugin *up, const char *cmd)
+{
+    if (!strncmp (cmd, "check", 5))
+    {
+        update_icon (up, TRUE);
+        check_for_updates (up);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/* Handler for interval update from variable watcher */
+void updater_set_interval (UpdaterPlugin *up)
+{
+    if (up->timer) g_source_remove (up->timer);
+    if (up->interval)
+        up->timer = g_timeout_add_seconds (up->interval * SECS_PER_HOUR, periodic_check, up);
+    else
+        up->timer = 0;
+}
+
 void updater_init (UpdaterPlugin *up)
 {
-#endif
     /* Allocate icon as a child of top level */
     up->tray_icon = gtk_image_new ();
     gtk_container_add (GTK_CONTAINER (up->plugin), up->tray_icon);
@@ -456,112 +492,21 @@ void updater_init (UpdaterPlugin *up)
     up->cancellable = g_cancellable_new ();
 
 #ifdef LXPLUG
-    /* Set timer for update checks */
-    if (!config_setting_lookup_int (settings, "Interval", &up->interval)) up->interval = 24;
+    if (!config_setting_lookup_int (up->settings, "Interval", &up->interval)) up->interval = 24;
+#endif
+
     if (up->interval)
         up->timer = g_timeout_add_seconds (up->interval * SECS_PER_HOUR, periodic_check, up);
     else
         up->timer = 0;
-#endif
 
     /* Start the initial check for updates */
     up->idle_timer = g_idle_add (init_check, up);
 
     /* Show the widget and return. */
     gtk_widget_show_all (up->plugin);
-#ifdef LXPLUG
-    return up->plugin;
-#endif
 }
 
-#ifndef LXPLUG
-void updater_set_interval (UpdaterPlugin *up)
-{
-    if (up->timer) g_source_remove (up->timer);
-    if (up->interval)
-        up->timer = g_timeout_add_seconds (up->interval * SECS_PER_HOUR, periodic_check, up);
-    else
-        up->timer = 0;
-}
-#endif
-
-/* Handler for menu button click */
-#ifdef LXPLUG
-static gboolean updater_button_press_event (GtkWidget *widget, GdkEventButton *event, LXPanel *)
-{
-    UpdaterPlugin *up = lxpanel_plugin_get_data (widget);
-
-    /* Show or hide the popup menu on left-click */
-    if (event->button == 1)
-    {
-        show_menu (up);
-        return TRUE;
-    }
-    else return FALSE;
-}
-#else
-static void updater_button_press_event (GtkWidget *, UpdaterPlugin *up)
-{
-    if (pressed != PRESS_LONG) show_menu (up);
-    pressed = PRESS_NONE;
-}
-
-static void updater_gesture_pressed (GtkGestureLongPress *, gdouble x, gdouble y, UpdaterPlugin *)
-{
-    pressed = PRESS_LONG;
-    press_x = x;
-    press_y = y;
-}
-
-static void updater_gesture_end (GtkGestureLongPress *, GdkEventSequence *, UpdaterPlugin *up)
-{
-    if (pressed == PRESS_LONG) pass_right_click (up->plugin, press_x, press_y);
-}
-#endif
-
-/* Handler for system config changed message from panel */
-#ifdef LXPLUG
-static void updater_configuration_changed (LXPanel *, GtkWidget *p)
-{
-    UpdaterPlugin *up = lxpanel_plugin_get_data (p);
-#else
-void updater_update_display (UpdaterPlugin *up)
-{
-#endif
-
-    wrap_set_taskbar_icon (up, up->tray_icon, "update-avail");
-}
-
-/* Handler for control message from panel */
-#ifdef LXPLUG
-static gboolean updater_control_msg (GtkWidget *plugin, const char *cmd)
-{
-    UpdaterPlugin *up = lxpanel_plugin_get_data (plugin);
-#else
-gboolean updater_control_msg (UpdaterPlugin *up, const char *cmd)
-{
-#endif
-
-    if (!strncmp (cmd, "check", 5))
-    {
-        update_icon (up, TRUE);
-        check_for_updates (up);
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-/* Plugin destructor. */
-#ifdef LXPLUG
-static void updater_destructor (gpointer user_data)
-{
-    UpdaterPlugin *up = (UpdaterPlugin *) user_data;
-
-    /* Deallocate memory */
-    g_free (up);
-}
-#else
 void updater_destructor (gpointer user_data)
 {
     UpdaterPlugin *up = (UpdaterPlugin *) user_data;
@@ -569,15 +514,69 @@ void updater_destructor (gpointer user_data)
     g_cancellable_cancel (up->cancellable);
     if (up->timer) g_source_remove (up->timer);
     if (up->idle_timer) g_source_remove (up->idle_timer);
+
+#ifndef LXPLUG
     if (up->gesture) g_object_unref (up->gesture);
+#endif
 
     /* Deallocate memory */
     g_free (up);
 }
-#endif
 
+/*----------------------------------------------------------------------------*/
+/* LXPanel plugin functions                                                   */
+/*----------------------------------------------------------------------------*/
 #ifdef LXPLUG
-/* Handler to open config dialog */
+
+/* Constructor */
+static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *settings)
+{
+    /* Allocate and initialize plugin context */
+    UpdaterPlugin *up = g_new0 (UpdaterPlugin, 1);
+
+    setlocale (LC_ALL, "");
+    bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
+    bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+
+    /* Allocate top level widget and set into plugin widget pointer. */
+    up->panel = panel;
+    up->settings = settings;
+    up->plugin = gtk_button_new ();
+    lxpanel_plugin_set_data (up->plugin, up, updater_destructor);
+
+    updater_init (up);
+
+    return up->plugin;
+}
+
+/* Handler for system config changed message from panel */
+static void updater_configuration_changed (LXPanel *, GtkWidget *p)
+{
+    UpdaterPlugin *up = lxpanel_plugin_get_data (p);
+    updater_update_display (up);
+}
+
+/* Handler for control message */
+static gboolean updater_control (GtkWidget *plugin, const char *cmd)
+{
+    UpdaterPlugin *up = lxpanel_plugin_get_data (plugin);
+    return updater_control_msg (up, cmd);
+}
+
+/* Apply changes from config dialog */
+static gboolean updater_apply_configuration (gpointer user_data)
+{
+    UpdaterPlugin *up = lxpanel_plugin_get_data (GTK_WIDGET (user_data));
+    config_group_set_int (up->settings, "Interval", up->interval);
+    if (up->timer) g_source_remove (up->timer);
+    if (up->interval)
+        up->timer = g_timeout_add_seconds (up->interval * SECS_PER_HOUR, periodic_check, up);
+    else
+        up->timer = 0;
+    return FALSE;
+}
+
+/* Display configuration dialog */
 static GtkWidget *updater_configure (LXPanel *panel, GtkWidget *p)
 {
     UpdaterPlugin *up = lxpanel_plugin_get_data (p);
@@ -588,22 +587,9 @@ static GtkWidget *updater_configure (LXPanel *panel, GtkWidget *p)
         NULL);
 }
 
-/* Handler on closing config dialog */
-static gboolean updater_apply_configuration (gpointer user_data)
-{
-    UpdaterPlugin *up = lxpanel_plugin_get_data ((GtkWidget *) user_data);
-    config_group_set_int (up->settings, "Interval", up->interval);
-    if (up->timer) g_source_remove (up->timer);
-    if (up->interval)
-        up->timer = g_timeout_add_seconds (up->interval * SECS_PER_HOUR, periodic_check, up);
-    else
-        up->timer = 0;
-    return FALSE;
-}
-
 FM_DEFINE_MODULE (lxpanel_gtk, updater)
 
-/* Plugin descriptor. */
+/* Plugin descriptor */
 LXPanelPluginInit fm_module_init_lxpanel_gtk = {
     .name = N_("Updater"),
     .description = N_("Checks for updates"),
@@ -611,7 +597,7 @@ LXPanelPluginInit fm_module_init_lxpanel_gtk = {
     .reconfigure = updater_configuration_changed,
     .button_press_event = updater_button_press_event,
     .config = updater_configure,
-    .control = updater_control_msg,
+    .control = updater_control,
     .gettext_package = GETTEXT_PACKAGE
 };
 #endif
