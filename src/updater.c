@@ -25,10 +25,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ============================================================================*/
 
-#include <errno.h>
 #include <locale.h>
-#include <stdlib.h>
-#include <string.h>
 #include <glib/gi18n.h>
 
 #ifdef LXPLUG
@@ -59,7 +56,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Plug-in global data                                                        */
 /*----------------------------------------------------------------------------*/
 
-
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
 /*----------------------------------------------------------------------------*/
@@ -82,6 +78,10 @@ static void update_icon (UpdaterPlugin *up, gboolean hide);
 static gboolean init_check (gpointer data);
 static gboolean net_check (gpointer data);
 static gboolean periodic_check (gpointer data);
+
+/*----------------------------------------------------------------------------*/
+/* Function definitions                                                       */
+/*----------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------------------*/
 /* Utility functions                                                          */
