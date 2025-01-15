@@ -464,7 +464,7 @@ void updater_init (UpdaterPlugin *up)
     g_signal_connect (up->plugin, "clicked", G_CALLBACK (updater_button_press_event), up);
 
     /* Set up long press */
-    up->gesture = add_long_press (up->plugin);
+    up->gesture = add_long_press (up->plugin, NULL, NULL);
 #endif
 
     /* Set up variables */
