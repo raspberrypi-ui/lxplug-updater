@@ -419,19 +419,6 @@ static void updater_button_press_event (GtkWidget *, UpdaterPlugin *up)
     if (pressed != PRESS_LONG) show_menu (up);
     pressed = PRESS_NONE;
 }
-
-/* Handler for long press gesture */
-static void updater_gesture_pressed (GtkGestureLongPress *, gdouble x, gdouble y, UpdaterPlugin *)
-{
-    pressed = PRESS_LONG;
-    press_x = x;
-    press_y = y;
-}
-
-static void updater_gesture_end (GtkGestureLongPress *, GdkEventSequence *, UpdaterPlugin *up)
-{
-    if (pressed == PRESS_LONG) pass_right_click (up->plugin, press_x, press_y);
-}
 #endif
 
 /* Handler for system config changed message from panel */
@@ -477,11 +464,7 @@ void updater_init (UpdaterPlugin *up)
     g_signal_connect (up->plugin, "clicked", G_CALLBACK (updater_button_press_event), up);
 
     /* Set up long press */
-    up->gesture = gtk_gesture_long_press_new (up->plugin);
-    gtk_gesture_single_set_touch_only (GTK_GESTURE_SINGLE (up->gesture), touch_only);
-    g_signal_connect (up->gesture, "pressed", G_CALLBACK (updater_gesture_pressed), up);
-    g_signal_connect (up->gesture, "end", G_CALLBACK (updater_gesture_end), up);
-    gtk_event_controller_set_propagation_phase (GTK_EVENT_CONTROLLER (up->gesture), GTK_PHASE_BUBBLE);
+    up->gesture = add_long_press (up->plugin);
 #endif
 
     /* Set up variables */
