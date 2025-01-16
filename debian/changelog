@@ -1,3 +1,9 @@
+pplug-updater (0.21) bookworm; urgency=medium
+
+  * First hybrid package version
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 16 Jan 2025 18:04:26 +0000
+
 lxplug-updater (0.20) bookworm; urgency=medium
 
   * Fix menu position

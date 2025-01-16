@@ -1,19 +1,28 @@
-Source: lxplug-updater
+Source: pplug-updater
 Section: x11
 Priority: optional
 Maintainer: Simon Long <simon@raspberrypi.com>
 Build-Depends:
- debhelper (>= 9), dh-autoreconf, intltool, libgtk-3-dev (>= 3.24),
- libiw-dev [linux-any], libmenu-cache-dev | libmenu-cache1-dev,
- libwnck-3-dev, libfm-gtk-dev (>= 1.3.2-1+rpt1), lxpanel-dev (>= 0.10.1-1+rpt1),
+ debhelper-compat (= 13), meson,
+ libgtk-3-dev (>= 3.24), libgtkmm-3.0-dev (>= 3.24),
+ lxpanel-dev (>= 0.10.1-2+rpt21), wf-panel-pi-dev (>=0.92),
+ libgtk-layer-shell-dev (>= 0.6.0), libglm-dev,
  libpackagekit-glib2-dev
-Standards-Version: 4.3.0
-Homepage: http://raspberrypi.org/
+Standards-Version: 4.5.1
+Homepage: http://raspberrypi.com/
 
 Package: lxplug-updater
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, lxmenu-data, libgtk-3-0 (>= 3.24),
- lxpanel (>= 0.10.1-1+rpt1), lxpanel-data (>= 0.10.1-1+rpt1), libfm-modules (>= 1.3.2-1+rpt1),
- packagekit, raspi-config, gui-updater
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ lxpanel (>= 0.10.1-2+rpt21), lxpanel-data (>= 0.10.1-2+rpt21),
+ raspi-config, gui-updater
 Description: Updater plugin for lxpanel
  Plugin for lxpanel to check for and install updates.
+
+Package: wfplug-updater
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ wf-panel-pi (>=0.92),
+ raspi-config, gui-updater
+Description: Updater plugin for wf-panel-pi
+ Plugin for wf-panel-pi to check for and install updates.

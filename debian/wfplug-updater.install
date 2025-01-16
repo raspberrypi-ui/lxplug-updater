@@ -1,0 +1,4 @@
+usr/lib/aarch64-linux-gnu/wf-panel-pi/libupdater.so
+usr/share/wf-panel-pi/metadata/updater.xml
+usr/share/wf-panel-pi/ui/lxplug-updater.ui
+usr/share/locale/*/LC_MESSAGES/wfplug_updater.mo
