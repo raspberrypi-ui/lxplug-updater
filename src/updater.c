@@ -233,9 +233,7 @@ static void show_updates (GtkWidget *, gpointer user_data)
     int count;
     char buffer[1024], *ptr, *ver;
 
-#ifdef LXPLUG
     textdomain (GETTEXT_PACKAGE);
-#endif
 
     builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/ui/lxplug-updater.ui");
     up->update_dlg = (GtkWidget *) gtk_builder_get_object (builder, "update_dlg");
