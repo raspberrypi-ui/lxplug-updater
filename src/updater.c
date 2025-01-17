@@ -40,7 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <packagekit-glib2/packagekit.h>
 
 /*----------------------------------------------------------------------------*/
-/* Typedefs and macros */
+/* Typedefs and macros                                                        */
 /*----------------------------------------------------------------------------*/
 
 #define DEBUG_ON
