@@ -1,5 +1,6 @@
 [encoding: UTF-8]
-plugins/updater/updater.c
-src/installer.c
-data/pwdlpu.sh
+src/updater.c
+src/updater.cpp
+src/updater.h
+src/updater.hpp
 [type: gettext/glade] data/lxplug-updater.ui
