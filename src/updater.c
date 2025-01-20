@@ -461,16 +461,8 @@ void updater_init (UpdaterPlugin *up)
     up->ids = NULL;
     up->cancellable = g_cancellable_new ();
 
-#ifdef LXPLUG
-    if (!config_setting_lookup_int (up->settings, "Interval", &up->interval)) up->interval = 24;
-#endif
-
-    if (up->interval)
-        up->timer = g_timeout_add_seconds (up->interval * SECS_PER_HOUR, periodic_check, up);
-    else
-        up->timer = 0;
-
-    /* Start the initial check for updates */
+    /* Start timed events to monitor status */
+    updater_set_interval (up);
     up->idle_timer = g_idle_add (init_check, up);
 
     /* Show the widget and return. */
@@ -510,6 +502,9 @@ static GtkWidget *updater_constructor (LXPanel *panel, config_setting_t *setting
     up->plugin = gtk_button_new ();
     lxpanel_plugin_set_data (up->plugin, up, updater_destructor);
 
+    /* Read config */
+    if (!config_setting_lookup_int (up->settings, "Interval", &up->interval)) up->interval = 24;
+
     updater_init (up);
 
     return up->plugin;
@@ -548,12 +543,8 @@ static gboolean updater_apply_configuration (gpointer user_data)
     UpdaterPlugin *up = lxpanel_plugin_get_data (GTK_WIDGET (user_data));
 
     config_group_set_int (up->settings, "Interval", up->interval);
-    if (up->timer) g_source_remove (up->timer);
-    if (up->interval)
-        up->timer = g_timeout_add_seconds (up->interval * SECS_PER_HOUR, periodic_check, up);
-    else
-        up->timer = 0;
 
+    updater_set_interval (up);
     return FALSE;
 }
 
