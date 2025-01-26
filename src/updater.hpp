@@ -32,12 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtkmm/button.h>
 
 extern "C" {
+#include "lxutils.h"
 #include "updater.h"
-extern void updater_init (UpdaterPlugin *up);
-extern void updater_update_display (UpdaterPlugin *up);
-extern void updater_set_interval (UpdaterPlugin *up);
-extern gboolean updater_control_msg (UpdaterPlugin *up, const char *cmd);
-extern void updater_destructor (gpointer user_data);}
+}
 
 class WayfireUpdater : public WayfireWidget
 {
