@@ -53,7 +53,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SECS_PER_HOUR 3600L
 
 /*----------------------------------------------------------------------------*/
-/* Plug-in global data                                                        */
+/* Global data                                                                */
 /*----------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------------------*/
@@ -65,6 +65,7 @@ static void check_for_updates (gpointer user_data);
 static gpointer refresh_update_cache (gpointer data);
 static void refresh_cache_done (PkTask *task, GAsyncResult *res, gpointer data);
 static gboolean filter_fn (PkPackage *package, gpointer user_data);
+static gboolean filter_fn_x86 (PkPackage *package, gpointer);
 static void check_updates_done (PkTask *task, GAsyncResult *res, gpointer data);
 static void install_updates (GtkWidget *widget, gpointer user_data);
 static void launch_installer (void);
@@ -78,6 +79,7 @@ static void update_icon (UpdaterPlugin *up, gboolean hide);
 static gboolean init_check (gpointer data);
 static gboolean net_check (gpointer data);
 static gboolean periodic_check (gpointer data);
+static void updater_button_clicked (GtkWidget *, UpdaterPlugin *up);
 
 /*----------------------------------------------------------------------------*/
 /* Function definitions                                                       */
@@ -92,7 +94,6 @@ static gboolean net_available (void)
     if (system ("hostname -I | grep -q \\\\.") == 0) return TRUE;
     else return FALSE;
 }
-
 
 /*----------------------------------------------------------------------------*/
 /* Handlers for PackageKit asynchronous check for updates                     */
