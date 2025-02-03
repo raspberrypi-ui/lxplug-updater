@@ -450,9 +450,6 @@ void updater_init (UpdaterPlugin *up)
     gtk_button_set_relief (GTK_BUTTON (up->plugin), GTK_RELIEF_NONE);
 #ifndef LXPLUG
     g_signal_connect (up->plugin, "clicked", G_CALLBACK (updater_button_clicked), up);
-
-    /* Set up long press */
-    up->gesture = add_long_press (up->plugin, NULL, NULL);
 #endif
 
     /* Set up variables */
@@ -477,10 +474,6 @@ void updater_destructor (gpointer user_data)
     g_cancellable_cancel (up->cancellable);
     if (up->timer) g_source_remove (up->timer);
     if (up->idle_timer) g_source_remove (up->idle_timer);
-
-#ifndef LXPLUG
-    if (up->gesture) g_object_unref (up->gesture);
-#endif
 
     /* Deallocate memory */
     g_free (up);
