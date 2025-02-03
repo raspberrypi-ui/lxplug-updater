@@ -1,0 +1,146 @@
+# Slovak translations for lxplug_updater package.
+# Copyright (C) 2021 Raspberry Pi Ltd
+# This file is distributed under the same license as the lxplug_updater package.
+# Jose Riha <jose1711@gmail.com>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lxplug_updater 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-09-17 12:59+0100\n"
+"PO-Revision-Date: 2024-07-11 23:28+0200\n"
+"Last-Translator: Jose Riha <simon@raspberrypi.com>\n"
+"Language-Team: Slovak <(nothing)>\n"
+"Language: sk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../plugins/updater/updater.c:209
+msgid ""
+"Updates are available\n"
+"Click the update icon to install"
+msgstr ""
+"Sú dostupné aktualižacie\n"
+"Kliknite na ikonu aktualizácie a nainštalujte ich"
+
+#: ../plugins/updater/updater.c:230
+msgid "No network connection - cannot install updates."
+msgstr "Nie ste pripojený k sieti - aktualizácie nie je možné nainštalovať."
+
+#: ../plugins/updater/updater.c:236
+msgid ""
+"Clock not synchronised - cannot install updates. Try again in a few minutes."
+msgstr ""
+"Hodiny nie sú synchronizované - aktualizácie nie je možné nainštalovať. Počkajte pár minút a skúste to znova."
+
+#: ../plugins/updater/updater.c:331
+msgid "Show Updates..."
+msgstr "Zobraziť aktualizácie..."
+
+#: ../plugins/updater/updater.c:335
+msgid "Install Updates"
+msgstr "Inštalovať aktualizácie"
+
+#: ../plugins/updater/updater.c:470
+msgid "Updates are available - click to install"
+msgstr "Sú dostupné aktualizácie - kliknite pre ich inštaláciu"
+
+#: ../plugins/updater/updater.c:550 ../plugins/updater/updater.c:581
+msgid "Updater"
+msgstr "Aktualizácie"
+
+#: ../plugins/updater/updater.c:552
+msgid "Hours between checks for updates"
+msgstr "Počet hodín medzi kontrolami aktualizácií"
+
+#: ../plugins/updater/updater.c:582
+msgid "Checks for updates"
+msgstr "Skontrolovať aktualizácie"
+
+#: ../src/installer.c:101
+msgid "Reboot"
+msgstr "Reštartovať"
+
+#: ../src/installer.c:102
+msgid "Later"
+msgstr "Neskôr"
+
+#: ../src/installer.c:154 ../src/installer.c:163
+#, c-format
+msgid "Error %s - %s"
+msgstr "Chyba %s - %s"
+
+#: ../src/installer.c:183 ../src/installer.c:215
+msgid "Updating package data - please wait..."
+msgstr "Aktualizujem údaje o balíčkoch - počkajte, prosím..."
+
+#: ../src/installer.c:189
+msgid "Checking package details - please wait..."
+msgstr "Kontrolujem údaje o balíčkoch - počkajte, prosím..."
+
+#: ../src/installer.c:196
+#, c-format
+msgid "%s packages - please wait..."
+msgstr "%s balíčkov - počkajte, prosím..."
+
+#: ../src/installer.c:196
+msgid "Installing"
+msgstr "Inštalujem"
+
+#: ../src/installer.c:196
+msgid "Downloading"
+msgstr "Sťahujem"
+
+#: ../src/installer.c:225
+msgid "updating cache"
+msgstr "aktualizujem vyrovnávaciu pamäť"
+
+#: ../src/installer.c:227
+msgid "Comparing versions - please wait..."
+msgstr "Porovnávam verzie - počkajte, prosím..."
+
+#: ../src/installer.c:243
+msgid "comparing versions"
+msgstr "kontrolujem verzie"
+
+#: ../src/installer.c:258
+msgid "Installing updates - please wait..."
+msgstr "Inštalujem aktualizácie - počkajte, prosím..."
+
+#: ../src/installer.c:266 ../src/installer.c:281
+msgid "System is up to date"
+msgstr "Systém je aktuálny"
+
+#: ../src/installer.c:277
+msgid "installing packages"
+msgstr "inštalujem balíčky"
+
+#: ../src/installer.c:286
+msgid ""
+"System is up to date.\n"
+"A reboot is required to complete the install. Reboot now or later?"
+msgstr ""
+"Systém je aktuálny.\n"
+"Na dokončenie aktualizácie je potrebné reštartovať. Chcete to urobiť teraz alebo neskôr?"
+
+#: ../data/pwdlpu.sh:6
+msgid "Password Required"
+msgstr "Vyžaduje sa heslo"
+
+#: ../data/lxplug-updater.ui.h:1
+msgid "Available Updates"
+msgstr "Sú dostupné aktualizácie"
+
+#: ../data/lxplug-updater.ui.h:2
+msgid "Close"
+msgstr "Zavrieť"
+
+#: ../data/lxplug-updater.ui.h:3
+msgid "Install"
+msgstr "Inštalovať"
+
+#: ../data/lxplug-updater.ui.h:4
+msgid "The following packages can be updated :"
+msgstr "Nasledujúce balíčky je možné aktualizovať: "
